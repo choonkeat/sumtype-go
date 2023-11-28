@@ -30,7 +30,7 @@ func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 		fmt.Fprintf(builder, "}\n\n")
 
 		// Generate method
-		fmt.Fprintf(builder, "func (s %s) %s(scenarios UserScenarios) {\n", structName, flags.switchName)
+		fmt.Fprintf(builder, "func (s %s) %s(scenarios %s) {\n", structName, flags.switchName, parsedFile.Name)
 		if len(data.Fields) > 0 {
 			fmt.Fprintf(builder, "\tscenarios.%s(s.%s)\n", data.Name, strings.Join(getFieldNames(data.Fields), ", s."))
 		} else {
@@ -39,7 +39,7 @@ func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 		fmt.Fprintf(builder, "}\n\n")
 
 		// Generate constructor function
-		fmt.Fprintf(builder, "func %s(%s) User {\n", data.Name, getParamList(data.Fields))
+		fmt.Fprintf(builder, "func %s(%s) %s {\n", data.Name, getParamList(data.Fields), strings.TrimSuffix(parsedFile.Name, flags.structSuffix))
 		if len(data.Fields) > 0 {
 			fmt.Fprintf(builder, "\treturn %s{%s}\n", structName, strings.Join(getFieldNames(data.Fields), ", "))
 		} else {

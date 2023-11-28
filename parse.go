@@ -20,6 +20,7 @@ type ParsedData struct {
 type ParsedFile struct {
 	PackageName string
 	Imports     []string
+	Name        string
 	Data        []ParsedData
 }
 
@@ -56,6 +57,7 @@ func parseFile(flags Flags) (ParsedFile, error) {
 			if !ok || !strings.HasSuffix(typeSpec.Name.Name, flags.structSuffix) {
 				continue
 			}
+			parsedFile.Name = typeSpec.Name.Name
 
 			structType, ok := typeSpec.Type.(*ast.StructType)
 			if !ok {
