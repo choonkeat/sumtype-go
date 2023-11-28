@@ -79,7 +79,7 @@ go install github.com/choonkeat/sumtype-go@v0.2.1
 
 ## Usage
 
-After installation, you can start using `sumtype-go`` by invoking it from the command line. Here's a basic example of how to use it:
+After installation, you can start using `sumtype-go` by invoking it from the command line. Here's a basic example of how to use it:
 
 ```
   -input string
