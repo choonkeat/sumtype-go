@@ -6,7 +6,7 @@ import (
 	"unicode"
 )
 
-func writeGoCode(parsedFile ParsedFile, builder *strings.Builder) {
+func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 	builder.WriteString("// Generated code by github.com/choonkeat/sumtype-go\npackage ")
 	builder.WriteString(parsedFile.PackageName)
 	builder.WriteString("\n\n")
@@ -30,7 +30,7 @@ func writeGoCode(parsedFile ParsedFile, builder *strings.Builder) {
 		fmt.Fprintf(builder, "}\n\n")
 
 		// Generate method
-		fmt.Fprintf(builder, "func (s %s) Switch(scenarios UserScenarios) {\n", structName)
+		fmt.Fprintf(builder, "func (s %s) %s(scenarios UserScenarios) {\n", structName, flags.switchName)
 		if len(data.Fields) > 0 {
 			fmt.Fprintf(builder, "\tscenarios.%s(s.%s)\n", data.Name, strings.Join(getFieldNames(data.Fields), ", s."))
 		} else {

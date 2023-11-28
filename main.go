@@ -8,24 +8,32 @@ import (
 	"strings"
 )
 
+type Flags struct {
+	inputFile    string
+	structSuffix string
+	switchName   string
+}
+
 func main() {
 	// Command-line flags
-	var inputFile string
-	flag.StringVar(&inputFile, "input", "", "Input file name")
+	var flags Flags
+	flag.StringVar(&flags.inputFile, "input", "", "Input file name")
+	flag.StringVar(&flags.structSuffix, "suffix", "Scenarios", "Suffix of the struct name")
+	flag.StringVar(&flags.switchName, "switch", "Switch", "Name of the switch method")
 	flag.Parse()
-	if inputFile == "" {
+	if flags.inputFile == "" {
 		flag.Usage()
 		return
 	}
 
 	// Read and parse the input file
-	parsedFile, err := parseFile(inputFile)
+	parsedFile, err := parseFile(flags)
 	if err != nil {
 		panic(err)
 	}
 
 	var builder strings.Builder
-	writeGoCode(parsedFile, &builder)
+	writeGoCode(flags, parsedFile, &builder)
 	formattedCode, err := format.Source([]byte(builder.String()))
 	if err != nil {
 		fmt.Println("Error formatting source:", err)
@@ -33,7 +41,7 @@ func main() {
 	}
 
 	// Open the output file
-	outputFile := strings.Replace(inputFile, ".go", ".boilerplate.go", 1)
+	outputFile := strings.Replace(flags.inputFile, ".go", ".boilerplate.go", 1)
 	file, err := os.Create(outputFile)
 	if err != nil {
 		panic(err)

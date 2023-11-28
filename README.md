@@ -2,7 +2,7 @@
 
 ## Introduction
 
-`sumtype-go` is a CLI tool designed to facilitate the creation and management of sum types in Go. This tool simplifies the process of generating boilerplate code for sum types, making it easier to work with variant types in Go.
+`sumtype-go` is a CLI tool designed to facilitate the creation and management of sum types (aka union types) in Go. This tool simplifies the process of generating boilerplate code for discriminated union types, making it easier to work with its variants in Go.
 
 ## Quick Tour
 
@@ -22,7 +22,7 @@ type User interface {
 	Switch(s UserScenarios)
 }
 
-type UserScenarios struct {
+type UserScenarios struct { // be sure to suffix the name with `Scenarios`
 	Anonymous func()
 	Member    func(email string, since time.Time)
 	Admin     func(email string)
@@ -32,7 +32,7 @@ type UserScenarios struct {
 Execute this command
 
 ```
-go install github.com/choonkeat/sumtype-go@latest
+go install github.com/choonkeat/sumtype-go@v0.2.0
 sumtype-go -input declaration.go
 ```
 
@@ -74,7 +74,7 @@ Refer to `example/`
 To install `sumtype-go`, ensure you have Go installed on your system, and then run the following command:
 
 ```sh
-go install github.com/choonkeat/sumtype-go@v0.1.0
+go install github.com/choonkeat/sumtype-go@v0.2.0
 ```
 
 ## Usage
@@ -82,5 +82,10 @@ go install github.com/choonkeat/sumtype-go@v0.1.0
 After installation, you can start using `sumtype-go`` by invoking it from the command line. Here's a basic example of how to use it:
 
 ```
-sumtype-go -input [declaration.go]
+  -input string
+    	Input file name
+  -suffix string
+    	Suffix of the struct name (default "Scenarios")
+  -switch string
+    	Name of the switch method (default "Switch")
 ```

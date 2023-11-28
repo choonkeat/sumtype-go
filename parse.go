@@ -23,9 +23,9 @@ type ParsedFile struct {
 	Data        []ParsedData
 }
 
-func parseFile(filename string) (ParsedFile, error) {
+func parseFile(flags Flags) (ParsedFile, error) {
 	fset := token.NewFileSet()
-	node, err := parser.ParseFile(fset, filename, nil, parser.ParseComments)
+	node, err := parser.ParseFile(fset, flags.inputFile, nil, parser.ParseComments)
 	if err != nil {
 		return ParsedFile{}, err
 	}
@@ -53,7 +53,7 @@ func parseFile(filename string) (ParsedFile, error) {
 		for _, spec := range genDecl.Specs {
 			// Check if the spec is a type specification (type name Type = ...)
 			typeSpec, ok := spec.(*ast.TypeSpec)
-			if !ok || !strings.HasSuffix(typeSpec.Name.Name, "Scenarios") {
+			if !ok || !strings.HasSuffix(typeSpec.Name.Name, flags.structSuffix) {
 				continue
 			}
 
