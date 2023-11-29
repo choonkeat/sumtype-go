@@ -6,7 +6,7 @@ example-generate:
 	go run *.go -input example/tree_1_declaration.go
 
 example-run:
-	go run example/*1*.go example/*2*.go
+	go run example/*.go
 
 test:
 	go test ./...

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 )
@@ -24,6 +25,15 @@ func main() {
 
 	for i, result := range results {
 		HandleResult(i, result)
+	}
+
+	trees := []Tree[int]{
+		Branch[int](Leaf[int](1), Leaf[int](2)), // this returns a `Tree` value
+		Leaf[int](3),                            // this also returns a `Tree` value
+	}
+
+	for i, tree := range trees {
+		log.Println(i, TreeString(tree))
 	}
 }
 
@@ -52,4 +62,17 @@ func HandleResult(i int, result Result[string, int]) {
 			log.Println(i, "Data:", data)
 		},
 	})
+}
+
+func TreeString(t Tree[int]) string {
+	var result string
+	t.Switch(TreeScenarios[int]{
+		Branch: func(left, right Tree[int]) {
+			result = "Branch(" + TreeString(left) + ", " + TreeString(right) + ")"
+		},
+		Leaf: func(s int) {
+			result = fmt.Sprintf("Leaf(%d)", s)
+		},
+	})
+	return result
 }

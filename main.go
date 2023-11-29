@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"go/format"
-	"log"
 	"os"
 	"strings"
 )
@@ -32,7 +31,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Parsed file: %#v\n", parsedFile)
 
 	var builder strings.Builder
 	writeGoCode(flags, parsedFile, &builder)

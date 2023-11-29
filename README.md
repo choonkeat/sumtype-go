@@ -31,8 +31,8 @@ type UserScenarios struct { // be sure to suffix the name with `Scenarios`
 
 Execute this command
 
-```
-go install github.com/choonkeat/sumtype-go@v0.3.1
+```sh
+go install github.com/choonkeat/sumtype-go@v0.3.2 # to install
 sumtype-go -input declaration.go
 ```
 
@@ -109,10 +109,11 @@ for i, result := range results {
 Refer to `example/result_1_*.go`
 
 ## Installation
+
 To install `sumtype-go`, ensure you have Go installed on your system, and then run the following command:
 
 ```sh
-go install github.com/choonkeat/sumtype-go@v0.3.1
+go install github.com/choonkeat/sumtype-go@v0.3.2
 ```
 
 ## Usage
