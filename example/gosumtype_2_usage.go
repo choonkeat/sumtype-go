@@ -16,6 +16,9 @@ func main() {
 		"\nUser2:", UserString(user2),
 		"\nUser3:", UserString(user3),
 	)
+
+	HandleResult(Err[string, int]("Oops err"))
+	HandleResult(Ok[string, int](42))
 }
 
 func UserString(u User) string {
@@ -32,4 +35,15 @@ func UserString(u User) string {
 		},
 	})
 	return result
+}
+
+func HandleResult(result Result[string, int]) {
+	result.Switch(ResultScenarios[string, int]{
+		Err: func(err string) {
+			log.Println("Error:", err)
+		},
+		Ok: func(data int) {
+			log.Println("Data:", data)
+		},
+	})
 }

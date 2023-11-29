@@ -6,40 +6,40 @@ import (
 )
 
 // Anonymous
-type anonymous struct {
+type anonymousUserScenarios struct {
 }
 
-func (s anonymous) Switch(scenarios UserScenarios) {
+func (s anonymousUserScenarios) Switch(scenarios UserScenarios) {
 	scenarios.Anonymous()
 }
 
 func Anonymous() User {
-	return anonymous{}
+	return anonymousUserScenarios{}
 }
 
 // Member
-type member struct {
+type memberUserScenarios struct {
 	email string
 	since time.Time
 }
 
-func (s member) Switch(scenarios UserScenarios) {
+func (s memberUserScenarios) Switch(scenarios UserScenarios) {
 	scenarios.Member(s.email, s.since)
 }
 
-func Member(email string, since time.Time) User {
-	return member{email, since}
+func Member(emailArg string, sinceArg time.Time) User {
+	return memberUserScenarios{emailArg, sinceArg}
 }
 
 // Admin
-type admin struct {
+type adminUserScenarios struct {
 	email string
 }
 
-func (s admin) Switch(scenarios UserScenarios) {
+func (s adminUserScenarios) Switch(scenarios UserScenarios) {
 	scenarios.Admin(s.email)
 }
 
-func Admin(email string) User {
-	return admin{email}
+func Admin(emailArg string) User {
+	return adminUserScenarios{emailArg}
 }

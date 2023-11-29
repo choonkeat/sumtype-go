@@ -11,12 +11,12 @@ import (
 //	    | Member String Time
 //	    | Admin String
 //
-// Ideally, we just code something like this and the
-// rest of the boiler plate can be generated
+// we declare `User` as an interface
 type User interface {
 	Switch(s UserScenarios)
 }
 
+// and the variants as a struct
 type UserScenarios struct {
 	Anonymous func()
 	Member    func(email string, since time.Time)

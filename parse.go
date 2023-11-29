@@ -4,6 +4,8 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"io/ioutil"
+	"log"
 	"strings"
 )
 
@@ -12,9 +14,15 @@ type ParsedField struct {
 	Type string // type of the argument
 }
 
+type ParsedGeneric struct {
+	Name       string // name of the generic type
+	Constraint string // type of the generic type
+}
+
 type ParsedData struct {
-	Name   string        // name of the function
-	Fields []ParsedField // fields of the function
+	Name     string          // name of the struct
+	Fields   []ParsedField   // fields of the struct
+	Generics []ParsedGeneric // generics of the struct
 }
 
 type ParsedFile struct {
@@ -29,6 +37,11 @@ func parseFile(flags Flags) (ParsedFile, error) {
 	node, err := parser.ParseFile(fset, flags.inputFile, nil, parser.ParseComments)
 	if err != nil {
 		return ParsedFile{}, err
+	}
+
+	src, err := ioutil.ReadFile(flags.inputFile)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	var parsedFile ParsedFile
@@ -59,6 +72,21 @@ func parseFile(flags Flags) (ParsedFile, error) {
 			}
 			parsedFile.Name = typeSpec.Name.Name
 
+			var parsedGeneric []ParsedGeneric
+			// Add this block to handle type parameters
+			if typeSpec.TypeParams != nil {
+				for _, param := range typeSpec.TypeParams.List {
+					for _, name := range param.Names {
+						start := fset.Position(param.Type.Pos()).Offset
+						end := fset.Position(param.Type.End()).Offset
+						parsedGeneric = append(parsedGeneric, ParsedGeneric{
+							Name:       name.Name,
+							Constraint: string(src[start:end]),
+						})
+					}
+				}
+			}
+
 			structType, ok := typeSpec.Type.(*ast.StructType)
 			if !ok {
 				continue
@@ -86,8 +114,9 @@ func parseFile(flags Flags) (ParsedFile, error) {
 
 				for _, fieldName := range field.Names {
 					parsedFile.Data = append(parsedFile.Data, ParsedData{
-						Name:   fieldName.Name,
-						Fields: fields,
+						Name:     fieldName.Name,
+						Fields:   fields,
+						Generics: parsedGeneric,
 					})
 				}
 			}

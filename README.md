@@ -70,6 +70,29 @@ func UserString(u User) string {
 
 Refer to `example/`
 
+## Generics
+
+We support generics too. e.g. the classic `Result` type
+
+```elm
+type Result x a
+	= Err x
+	| Ok a
+```
+
+can be defined as
+
+```go
+type Result[x, a interface{}] interface {
+	Switch(s ResultScenarios[x, a])
+}
+
+type ResultScenarios[x, a interface{}] struct {
+	Err func(err x)
+	Ok  func(data a)
+}
+```
+
 ## Installation
 To install `sumtype-go`, ensure you have Go installed on your system, and then run the following command:
 
