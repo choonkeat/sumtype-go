@@ -76,8 +76,8 @@ We support generics too. e.g. the classic `Result` type
 
 ```elm
 type Result x a
-	= Err x
-	| Ok a
+    = Err x
+    | Ok a
 ```
 
 can be defined as
