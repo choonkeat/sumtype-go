@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -137,8 +138,10 @@ func exprToString(expr ast.Expr) string {
 		return "*" + exprToString(t.X)
 	case *ast.ArrayType:
 		return "[]" + exprToString(t.Elt)
+	case *ast.IndexExpr:
+		return exprToString(t.X) + "[" + exprToString(t.Index) + "]"
 	// Add more cases as needed for other types
 	default:
-		return ""
+		return fmt.Sprintf("exprToString failed: %#v", expr)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"go/format"
+	"log"
 	"os"
 	"strings"
 )
@@ -31,13 +32,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	log.Printf("Parsed file: %#v\n", parsedFile)
 
 	var builder strings.Builder
 	writeGoCode(flags, parsedFile, &builder)
 	formattedCode, err := format.Source([]byte(builder.String()))
 	if err != nil {
 		fmt.Println("Error formatting source:", err)
-		return
+		// return
+		formattedCode = []byte(builder.String())
 	}
 
 	// Open the output file
