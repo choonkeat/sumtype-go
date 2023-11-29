@@ -36,21 +36,19 @@ go install github.com/choonkeat/sumtype-go@v0.2.1
 sumtype-go -input declaration.go
 ```
 
-To generate `declaration.boilerplate.go` and start using like
+To generate `declaration.boilerplate.go` and start using it!
 
 ```go
-func main() {
-	user1 := Anonymous()
-	user2 := Member("Alice", time.Now())
-	user3 := Admin("Bob")
-
-	log.Println(
-		"\nUser1:", UserString(user1),
-		"\nUser2:", UserString(user2),
-		"\nUser3:", UserString(user3),
-	)
+users := []User{
+	Anonymous(),                 // this returns a `User` value
+	Member("Alice", time.Now()), // this also returns a `User` value
+	Admin("Bob"),                // this also returns a `User` value
 }
+```
 
+and we can write functions that work with `User`
+
+```go
 func UserString(u User) string {
 	var result string
 	u.Switch(UserScenarios{
@@ -68,7 +66,7 @@ func UserString(u User) string {
 }
 ```
 
-Refer to `example/`
+Refer to `example/gosumtype_1_*.go`
 
 ## Generics
 
@@ -92,6 +90,23 @@ type ResultScenarios[x, a interface{}] struct {
 	Ok  func(data a)
 }
 ```
+
+Same thing, after executing `sumtype-go` to generate the `.boilerplate.go` file, you can use it like
+
+```go
+results := []Result[string, int]{
+	Err[string, int]("Oops err"), // this returns a `Result` value
+	Ok[string, int](42),          // this also returns a `Result` value
+}
+
+for i, result := range results {
+	HandleResult(i, result)
+}
+
+// TODO: implement `func HandleResult(i int, result Result[string, int])`
+```
+
+Refer to `example/result_1_*.go`
 
 ## Installation
 To install `sumtype-go`, ensure you have Go installed on your system, and then run the following command:

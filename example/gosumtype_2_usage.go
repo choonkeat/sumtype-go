@@ -7,18 +7,24 @@ import (
 
 // Example usage
 func main() {
-	user1 := Anonymous()
-	user2 := Member("Alice", time.Now())
-	user3 := Admin("Bob")
+	users := []User{
+		Anonymous(),                 // this returns a `User` value
+		Member("Alice", time.Now()), // this also returns a `User` value
+		Admin("Bob"),                // this also returns a `User` value
+	}
 
-	log.Println(
-		"\nUser1:", UserString(user1),
-		"\nUser2:", UserString(user2),
-		"\nUser3:", UserString(user3),
-	)
+	for i, user := range users {
+		log.Println(i, UserString(user))
+	}
 
-	HandleResult(Err[string, int]("Oops err"))
-	HandleResult(Ok[string, int](42))
+	results := []Result[string, int]{
+		Err[string, int]("Oops err"), // this returns a `Result` value
+		Ok[string, int](42),          // this also returns a `Result` value
+	}
+
+	for i, result := range results {
+		HandleResult(i, result)
+	}
 }
 
 func UserString(u User) string {
@@ -37,13 +43,13 @@ func UserString(u User) string {
 	return result
 }
 
-func HandleResult(result Result[string, int]) {
+func HandleResult(i int, result Result[string, int]) {
 	result.Switch(ResultScenarios[string, int]{
 		Err: func(err string) {
-			log.Println("Error:", err)
+			log.Println(i, "Error:", err)
 		},
 		Ok: func(data int) {
-			log.Println("Data:", data)
+			log.Println(i, "Data:", data)
 		},
 	})
 }
