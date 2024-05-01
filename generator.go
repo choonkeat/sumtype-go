@@ -20,52 +20,54 @@ func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 		builder.WriteString(")\n")
 	}
 
-	for _, data := range parsedFile.Data {
-		structName := unexported(data.Name) + parsedFile.Name
-		genericsDecl := buildGenericTypeDeclaration(data.Generics)
-		paramList := buildParameterListDeclaration(data.Generics)
+	for typeName, dataList := range parsedFile.Data {
+		for _, data := range dataList {
+			structName := unexported(data.Name) + typeName
+			genericsDecl := buildGenericTypeDeclaration(data.Generics)
+			paramList := buildParameterListDeclaration(data.Generics)
 
-		// Generate struct
-		fmt.Fprintf(builder, "\n// %s\n", data.Name)
-		fmt.Fprintf(builder, "type %s%s struct {\n", structName, genericsDecl)
-		for _, field := range data.Fields {
-			fmt.Fprintf(builder, "\t%s %s\n", field.Name, field.Type)
-		}
-		fmt.Fprintf(builder, "}\n\n")
+			// Generate struct
+			fmt.Fprintf(builder, "\n// %s\n", data.Name)
+			fmt.Fprintf(builder, "type %s%s struct {\n", structName, genericsDecl)
+			for _, field := range data.Fields {
+				fmt.Fprintf(builder, "\t%s %s\n", field.Name, field.Type)
+			}
+			fmt.Fprintf(builder, "}\n\n")
 
-		// Generate method
-		fmt.Fprintf(builder, "func (s %s%s) %s(scenarios %s%s) {\n", structName, paramList, flags.switchName, parsedFile.Name, paramList)
-		if len(data.Fields) > 0 {
+			// Generate method
+			fmt.Fprintf(builder, "func (s %s%s) %s(scenarios %s%s) {\n", structName, paramList, flags.switchName, typeName, paramList)
+			if len(data.Fields) > 0 {
+				fmt.Fprintf(builder,
+					"\tscenarios.%s(s.%s)\n",
+					data.Name,
+					strings.Join(getFieldNames("", data.Fields), ", s."),
+				)
+			} else {
+				fmt.Fprintf(builder, "\tscenarios.%s()\n", data.Name)
+			}
+			fmt.Fprintf(builder, "}\n\n")
+
+			// Generate constructor function
 			fmt.Fprintf(builder,
-				"\tscenarios.%s(s.%s)\n",
+				"func %s%s(%s) %s%s {\n",
 				data.Name,
-				strings.Join(getFieldNames("", data.Fields), ", s."),
-			)
-		} else {
-			fmt.Fprintf(builder, "\tscenarios.%s()\n", data.Name)
-		}
-		fmt.Fprintf(builder, "}\n\n")
-
-		// Generate constructor function
-		fmt.Fprintf(builder,
-			"func %s%s(%s) %s%s {\n",
-			data.Name,
-			genericsDecl,
-			getParamList("Arg", data.Fields),
-			strings.TrimSuffix(parsedFile.Name, flags.structSuffix),
-			paramList,
-		)
-		if len(data.Fields) > 0 {
-			fmt.Fprintf(builder,
-				"\treturn %s%s{%s}\n",
-				structName,
+				genericsDecl,
+				getParamList("Arg", data.Fields),
+				strings.TrimSuffix(typeName, flags.structSuffix),
 				paramList,
-				strings.Join(getFieldNames("Arg", data.Fields), ", "),
 			)
-		} else {
-			fmt.Fprintf(builder, "\treturn %s%s{}\n", structName, paramList)
+			if len(data.Fields) > 0 {
+				fmt.Fprintf(builder,
+					"\treturn %s%s{%s}\n",
+					structName,
+					paramList,
+					strings.Join(getFieldNames("Arg", data.Fields), ", "),
+				)
+			} else {
+				fmt.Fprintf(builder, "\treturn %s%s{}\n", structName, paramList)
+			}
+			fmt.Fprintf(builder, "}\n")
 		}
-		fmt.Fprintf(builder, "}\n")
 	}
 }
 

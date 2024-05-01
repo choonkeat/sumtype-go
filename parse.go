@@ -29,8 +29,7 @@ type ParsedData struct {
 type ParsedFile struct {
 	PackageName string
 	Imports     []string
-	Name        string
-	Data        []ParsedData
+	Data        map[string][]ParsedData
 }
 
 func parseFile(flags Flags) (ParsedFile, error) {
@@ -47,6 +46,7 @@ func parseFile(flags Flags) (ParsedFile, error) {
 
 	var parsedFile ParsedFile
 	parsedFile.PackageName = node.Name.Name // Extracting the package name
+	parsedFile.Data = make(map[string][]ParsedData)
 
 	for _, imp := range node.Imports {
 		// Extracting the import paths
@@ -71,7 +71,7 @@ func parseFile(flags Flags) (ParsedFile, error) {
 			if !ok || !strings.HasSuffix(typeSpec.Name.Name, flags.structSuffix) {
 				continue
 			}
-			parsedFile.Name = typeSpec.Name.Name
+			parsedFile.Data[typeSpec.Name.Name] = []ParsedData{}
 
 			var parsedGeneric []ParsedGeneric
 			// Add this block to handle type parameters
@@ -114,7 +114,7 @@ func parseFile(flags Flags) (ParsedFile, error) {
 				}
 
 				for _, fieldName := range field.Names {
-					parsedFile.Data = append(parsedFile.Data, ParsedData{
+					parsedFile.Data[typeSpec.Name.Name] = append(parsedFile.Data[typeSpec.Name.Name], ParsedData{
 						Name:     fieldName.Name,
 						Fields:   fields,
 						Generics: parsedGeneric,
