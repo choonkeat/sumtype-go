@@ -32,7 +32,7 @@ type UserVariants struct { // be sure to suffix the name with `Variants`
 Execute this command
 
 ```sh
-go install github.com/choonkeat/sumtype-go@v0.4.0 # to install
+go install github.com/choonkeat/sumtype-go@v0.4.1 # to install
 sumtype-go -input declaration.go
 ```
 
@@ -111,7 +111,7 @@ Refer to `example/result_1_*.go`
 To install `sumtype-go`, ensure you have Go installed on your system, and then run the following command:
 
 ```sh
-go install github.com/choonkeat/sumtype-go@v0.4.0
+go install github.com/choonkeat/sumtype-go@v0.4.1
 ```
 
 ## Usage
