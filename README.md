@@ -81,11 +81,11 @@ type Result x a
 can be defined as
 
 ```go
-type Result[x, a interface{}] interface {
+type Result[x, a any] interface {
 	Match(s ResultVariants[x, a])
 }
 
-type ResultVariants[x, a interface{}] struct {
+type ResultVariants[x, a any] struct {
 	Err func(err x)
 	Ok  func(data a)
 }
@@ -121,8 +121,8 @@ After installation, you can start using `sumtype-go` by invoking it from the com
 ```
   -input string
     	Input file name
+  -pattern-match string
+    	Name of the pattern match method (default "Match")
   -suffix string
-    	Suffix of the struct name (default "Variants")
-  -switch string
-    	Name of the switch method (default "Match")
+    	Suffix of the struct defining variants (default "Variants")
 ```
