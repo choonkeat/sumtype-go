@@ -4,12 +4,16 @@ import (
 	"time"
 )
 
-// To define this sum type:
+// To define these sum types:
 //
 //	type User
-//	    = Anonymous
+//	    = Anonymous PaymentMethod
 //	    | Member String Time
 //	    | Admin String
+//
+//	type PaymentMethod
+//	    = CreditCard String Time
+//	    | Paypal String
 //
 // we declare `User` as an interface
 type User interface {
@@ -19,8 +23,8 @@ type User interface {
 // and the variants as a struct
 type UserVariants struct {
 	Anonymous func(payment PaymentMethod)
-	Member    func(payment PaymentMethod, email string, since time.Time)
-	Admin     func(payment PaymentMethod, email string)
+	Member    func(email string, since time.Time)
+	Admin     func(email string)
 }
 
 type PaymentMethod interface {

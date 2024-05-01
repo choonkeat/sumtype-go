@@ -20,31 +20,29 @@ func Anonymous(paymentArg PaymentMethod) User {
 
 // Member
 type memberUserVariants struct {
-	payment PaymentMethod
-	email   string
-	since   time.Time
+	email string
+	since time.Time
 }
 
 func (s memberUserVariants) Match(Variants UserVariants) {
-	Variants.Member(s.payment, s.email, s.since)
+	Variants.Member(s.email, s.since)
 }
 
-func Member(paymentArg PaymentMethod, emailArg string, sinceArg time.Time) User {
-	return memberUserVariants{paymentArg, emailArg, sinceArg}
+func Member(emailArg string, sinceArg time.Time) User {
+	return memberUserVariants{emailArg, sinceArg}
 }
 
 // Admin
 type adminUserVariants struct {
-	payment PaymentMethod
-	email   string
+	email string
 }
 
 func (s adminUserVariants) Match(Variants UserVariants) {
-	Variants.Admin(s.payment, s.email)
+	Variants.Admin(s.email)
 }
 
-func Admin(paymentArg PaymentMethod, emailArg string) User {
-	return adminUserVariants{paymentArg, emailArg}
+func Admin(emailArg string) User {
+	return adminUserVariants{emailArg}
 }
 
 // CreditCard
