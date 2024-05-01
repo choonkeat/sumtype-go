@@ -6,8 +6,8 @@ type errResultVariants[x, a any] struct {
 	err x
 }
 
-func (s errResultVariants[x, a]) Match(Variants ResultVariants[x, a]) {
-	Variants.Err(s.err)
+func (s errResultVariants[x, a]) Match(variants ResultVariants[x, a]) {
+	variants.Err(s.err)
 }
 
 func Err[x, a any](errArg x) Result[x, a] {
@@ -19,8 +19,8 @@ type okResultVariants[x, a any] struct {
 	data a
 }
 
-func (s okResultVariants[x, a]) Match(Variants ResultVariants[x, a]) {
-	Variants.Ok(s.data)
+func (s okResultVariants[x, a]) Match(variants ResultVariants[x, a]) {
+	variants.Ok(s.data)
 }
 
 func Ok[x, a any](dataArg a) Result[x, a] {

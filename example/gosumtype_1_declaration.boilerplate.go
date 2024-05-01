@@ -10,8 +10,8 @@ type anonymousUserVariants struct {
 	payment PaymentMethod
 }
 
-func (s anonymousUserVariants) Match(Variants UserVariants) {
-	Variants.Anonymous(s.payment)
+func (s anonymousUserVariants) Match(variants UserVariants) {
+	variants.Anonymous(s.payment)
 }
 
 func Anonymous(paymentArg PaymentMethod) User {
@@ -24,8 +24,8 @@ type memberUserVariants struct {
 	since time.Time
 }
 
-func (s memberUserVariants) Match(Variants UserVariants) {
-	Variants.Member(s.email, s.since)
+func (s memberUserVariants) Match(variants UserVariants) {
+	variants.Member(s.email, s.since)
 }
 
 func Member(emailArg string, sinceArg time.Time) User {
@@ -37,8 +37,8 @@ type adminUserVariants struct {
 	email string
 }
 
-func (s adminUserVariants) Match(Variants UserVariants) {
-	Variants.Admin(s.email)
+func (s adminUserVariants) Match(variants UserVariants) {
+	variants.Admin(s.email)
 }
 
 func Admin(emailArg string) User {
@@ -51,8 +51,8 @@ type creditCardPaymentMethodVariants struct {
 	expiry time.Time
 }
 
-func (s creditCardPaymentMethodVariants) Match(Variants PaymentMethodVariants) {
-	Variants.CreditCard(s.number, s.expiry)
+func (s creditCardPaymentMethodVariants) Match(variants PaymentMethodVariants) {
+	variants.CreditCard(s.number, s.expiry)
 }
 
 func CreditCard(numberArg string, expiryArg time.Time) PaymentMethod {
@@ -64,8 +64,8 @@ type paypalPaymentMethodVariants struct {
 	email string
 }
 
-func (s paypalPaymentMethodVariants) Match(Variants PaymentMethodVariants) {
-	Variants.Paypal(s.email)
+func (s paypalPaymentMethodVariants) Match(variants PaymentMethodVariants) {
+	variants.Paypal(s.email)
 }
 
 func Paypal(emailArg string) PaymentMethod {
