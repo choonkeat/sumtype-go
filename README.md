@@ -116,13 +116,21 @@ go install github.com/choonkeat/sumtype-go@v0.4.0
 
 ## Usage
 
-After installation, you can start using `sumtype-go` by invoking it from the command line. Here's a basic example of how to use it:
+After installation, you can start using `sumtype-go` by invoking it from the command line.
 
 ```
+$ sumtype-go -h
+Usage of sumtype-go:
   -input string
     	Input file name
   -pattern-match string
     	Name of the pattern match method (default "Match")
   -suffix string
     	Suffix of the struct defining variants (default "Variants")
+```
+
+Here's a basic example of how to use it:
+
+```
+sumtype-go -input example/gosumtype_1_declaration.go
 ```
