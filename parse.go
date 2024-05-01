@@ -101,12 +101,18 @@ func parseFile(flags Flags) (ParsedFile, error) {
 
 				var fields []ParsedField
 				if funcType.Params != nil {
-					for _, param := range funcType.Params.List {
+					for i, param := range funcType.Params.List {
 						// Handle different types of fields
 						fieldType := exprToString(param.Type)
 						for _, paramName := range param.Names {
 							fields = append(fields, ParsedField{
 								Name: paramName.Name,
+								Type: fieldType,
+							})
+						}
+						if len(param.Names) == 0 {
+							fields = append(fields, ParsedField{
+								Name: fmt.Sprintf("arg%d", i),
 								Type: fieldType,
 							})
 						}

@@ -22,8 +22,8 @@ type User interface {
 
 // and the variants as a struct
 type UserVariants struct {
-	Anonymous func(payment PaymentMethod)
-	Member    func(email string, since time.Time)
+	Anonymous func(PaymentMethod)                 // preferably named, but can be anonymous
+	Member    func(email string, since time.Time) // named for clarity
 	Admin     func(email string)
 }
 

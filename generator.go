@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"unicode"
 )
@@ -20,7 +21,10 @@ func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 		builder.WriteString(")\n")
 	}
 
-	for typeName, dataList := range parsedFile.Data {
+	// if output file is committed to git, sorting will prevent unnecessary diffs
+	for _, row := range mapToSortedSlice(parsedFile.Data) {
+		typeName := row.key
+		dataList := row.value
 		for _, data := range dataList {
 			structName := unexported(data.Name) + typeName
 			genericsDecl := buildGenericTypeDeclaration(data.Generics)
@@ -133,4 +137,26 @@ func buildParameterListDeclaration(data []ParsedGeneric) string {
 		names = append(names, d.Name)
 	}
 	return "[" + strings.Join(names, ", ") + "]"
+}
+
+// Define the tuple struct as a generic type
+type tuple[K, V any] struct {
+	key   K
+	value V
+}
+
+// Function to convert a map[K]V to a sorted []tuple[K, V]
+// K must be both comparable and ordered
+func mapToSortedSlice[V any](m map[string]V) []tuple[string, V] {
+	result := make([]tuple[string, V], 0, len(m))
+	for k, v := range m {
+		result = append(result, tuple[string, V]{key: k, value: v})
+	}
+
+	// Sort the slice of tuples by the key
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].key < result[j].key
+	})
+
+	return result
 }
