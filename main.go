@@ -9,17 +9,17 @@ import (
 )
 
 type Flags struct {
-	inputFile    string
-	structSuffix string
-	switchName   string
+	inputFile            string
+	structSuffix         string
+	patternMatchFunction string
 }
 
 func main() {
 	// Command-line flags
 	var flags Flags
 	flag.StringVar(&flags.inputFile, "input", "", "Input file name")
-	flag.StringVar(&flags.structSuffix, "suffix", "Scenarios", "Suffix of the struct name")
-	flag.StringVar(&flags.switchName, "switch", "Switch", "Name of the switch method")
+	flag.StringVar(&flags.structSuffix, "suffix", "Variants", "Suffix of the struct defining variants")
+	flag.StringVar(&flags.patternMatchFunction, "pattern-match", "Match", "Name of the pattern match method")
 	flag.Parse()
 	if flags.inputFile == "" {
 		flag.Usage()

@@ -39,7 +39,7 @@ func main() {
 
 func UserString(u User) string {
 	var result string
-	u.Switch(UserScenarios{
+	u.Match(UserVariants{
 		Anonymous: func(paymentMethod PaymentMethod) {
 			result = "Anonymous coward" + fmt.Sprintf("%#v", paymentMethod)
 		},
@@ -54,7 +54,7 @@ func UserString(u User) string {
 }
 
 func HandleResult(i int, result Result[string, int]) {
-	result.Switch(ResultScenarios[string, int]{
+	result.Match(ResultVariants[string, int]{
 		Err: func(err string) {
 			log.Println(i, "Error:", err)
 		},
@@ -66,7 +66,7 @@ func HandleResult(i int, result Result[string, int]) {
 
 func TreeString(t Tree[int]) string {
 	var result string
-	t.Switch(TreeScenarios[int]{
+	t.Match(TreeVariants[int]{
 		Branch: func(left, right Tree[int]) {
 			result = "Branch(" + TreeString(left) + ", " + TreeString(right) + ")"
 		},

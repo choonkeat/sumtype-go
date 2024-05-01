@@ -6,70 +6,70 @@ import (
 )
 
 // Anonymous
-type anonymousUserScenarios struct {
+type anonymousUserVariants struct {
 	payment PaymentMethod
 }
 
-func (s anonymousUserScenarios) Switch(scenarios UserScenarios) {
-	scenarios.Anonymous(s.payment)
+func (s anonymousUserVariants) Match(Variants UserVariants) {
+	Variants.Anonymous(s.payment)
 }
 
 func Anonymous(paymentArg PaymentMethod) User {
-	return anonymousUserScenarios{paymentArg}
+	return anonymousUserVariants{paymentArg}
 }
 
 // Member
-type memberUserScenarios struct {
+type memberUserVariants struct {
 	payment PaymentMethod
 	email   string
 	since   time.Time
 }
 
-func (s memberUserScenarios) Switch(scenarios UserScenarios) {
-	scenarios.Member(s.payment, s.email, s.since)
+func (s memberUserVariants) Match(Variants UserVariants) {
+	Variants.Member(s.payment, s.email, s.since)
 }
 
 func Member(paymentArg PaymentMethod, emailArg string, sinceArg time.Time) User {
-	return memberUserScenarios{paymentArg, emailArg, sinceArg}
+	return memberUserVariants{paymentArg, emailArg, sinceArg}
 }
 
 // Admin
-type adminUserScenarios struct {
+type adminUserVariants struct {
 	payment PaymentMethod
 	email   string
 }
 
-func (s adminUserScenarios) Switch(scenarios UserScenarios) {
-	scenarios.Admin(s.payment, s.email)
+func (s adminUserVariants) Match(Variants UserVariants) {
+	Variants.Admin(s.payment, s.email)
 }
 
 func Admin(paymentArg PaymentMethod, emailArg string) User {
-	return adminUserScenarios{paymentArg, emailArg}
+	return adminUserVariants{paymentArg, emailArg}
 }
 
 // CreditCard
-type creditCardPaymentMethodScenarios struct {
+type creditCardPaymentMethodVariants struct {
 	number string
 	expiry time.Time
 }
 
-func (s creditCardPaymentMethodScenarios) Switch(scenarios PaymentMethodScenarios) {
-	scenarios.CreditCard(s.number, s.expiry)
+func (s creditCardPaymentMethodVariants) Match(Variants PaymentMethodVariants) {
+	Variants.CreditCard(s.number, s.expiry)
 }
 
 func CreditCard(numberArg string, expiryArg time.Time) PaymentMethod {
-	return creditCardPaymentMethodScenarios{numberArg, expiryArg}
+	return creditCardPaymentMethodVariants{numberArg, expiryArg}
 }
 
 // Paypal
-type paypalPaymentMethodScenarios struct {
+type paypalPaymentMethodVariants struct {
 	email string
 }
 
-func (s paypalPaymentMethodScenarios) Switch(scenarios PaymentMethodScenarios) {
-	scenarios.Paypal(s.email)
+func (s paypalPaymentMethodVariants) Match(Variants PaymentMethodVariants) {
+	Variants.Paypal(s.email)
 }
 
 func Paypal(emailArg string) PaymentMethod {
-	return paypalPaymentMethodScenarios{emailArg}
+	return paypalPaymentMethodVariants{emailArg}
 }

@@ -13,21 +13,21 @@ import (
 //
 // we declare `User` as an interface
 type User interface {
-	Switch(s UserScenarios)
+	Match(s UserVariants)
 }
 
 // and the variants as a struct
-type UserScenarios struct {
+type UserVariants struct {
 	Anonymous func(payment PaymentMethod)
 	Member    func(payment PaymentMethod, email string, since time.Time)
 	Admin     func(payment PaymentMethod, email string)
 }
 
 type PaymentMethod interface {
-	Switch(s PaymentMethodScenarios)
+	Match(s PaymentMethodVariants)
 }
 
-type PaymentMethodScenarios struct {
+type PaymentMethodVariants struct {
 	CreditCard func(number string, expiry time.Time)
 	Paypal     func(email string)
 }

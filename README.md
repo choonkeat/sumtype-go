@@ -19,10 +19,10 @@ write this Go type definition, e.g. in `declaration.go`
 
 ```go
 type User interface {
-	Switch(s UserScenarios)
+	Match(s UserVariants)
 }
 
-type UserScenarios struct { // be sure to suffix the name with `Scenarios`
+type UserVariants struct { // be sure to suffix the name with `Variants`
 	Anonymous func()
 	Member    func(email string, since time.Time)
 	Admin     func(email string)
@@ -51,7 +51,7 @@ and we can write functions that work with `User`
 ```go
 func UserString(u User) string {
 	var result string
-	u.Switch(UserScenarios{
+	u.Match(UserVariants{
 		Anonymous: func() {
 			result = "Anonymous coward"
 		},
@@ -82,10 +82,10 @@ can be defined as
 
 ```go
 type Result[x, a interface{}] interface {
-	Switch(s ResultScenarios[x, a])
+	Match(s ResultVariants[x, a])
 }
 
-type ResultScenarios[x, a interface{}] struct {
+type ResultVariants[x, a interface{}] struct {
 	Err func(err x)
 	Ok  func(data a)
 }
@@ -100,10 +100,8 @@ results := []Result[string, int]{
 }
 
 for i, result := range results {
-	HandleResult(i, result)
+	HandleResult(i, result) // implement your own `func HandleResult(int, Result[string, int])`
 }
-
-// TODO: implement `func HandleResult(i int, result Result[string, int])`
 ```
 
 Refer to `example/result_1_*.go`
@@ -124,7 +122,7 @@ After installation, you can start using `sumtype-go` by invoking it from the com
   -input string
     	Input file name
   -suffix string
-    	Suffix of the struct name (default "Scenarios")
+    	Suffix of the struct name (default "Variants")
   -switch string
-    	Name of the switch method (default "Switch")
+    	Name of the switch method (default "Match")
 ```

@@ -35,15 +35,15 @@ func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 			fmt.Fprintf(builder, "}\n\n")
 
 			// Generate method
-			fmt.Fprintf(builder, "func (s %s%s) %s(scenarios %s%s) {\n", structName, paramList, flags.switchName, typeName, paramList)
+			fmt.Fprintf(builder, "func (s %s%s) %s(Variants %s%s) {\n", structName, paramList, flags.patternMatchFunction, typeName, paramList)
 			if len(data.Fields) > 0 {
 				fmt.Fprintf(builder,
-					"\tscenarios.%s(s.%s)\n",
+					"\tVariants.%s(s.%s)\n",
 					data.Name,
 					strings.Join(getFieldNames("", data.Fields), ", s."),
 				)
 			} else {
-				fmt.Fprintf(builder, "\tscenarios.%s()\n", data.Name)
+				fmt.Fprintf(builder, "\tVariants.%s()\n", data.Name)
 			}
 			fmt.Fprintf(builder, "}\n\n")
 
