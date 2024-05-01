@@ -18,7 +18,16 @@ type User interface {
 
 // and the variants as a struct
 type UserScenarios struct {
-	Anonymous func()
-	Member    func(email string, since time.Time)
-	Admin     func(email string)
+	Anonymous func(payment PaymentMethod)
+	Member    func(payment PaymentMethod, email string, since time.Time)
+	Admin     func(payment PaymentMethod, email string)
+}
+
+type PaymentMethod interface {
+	Switch(s PaymentMethodScenarios)
+}
+
+type PaymentMethodScenarios struct {
+	CreditCard func(number string, expiry time.Time)
+	Paypal     func(email string)
 }

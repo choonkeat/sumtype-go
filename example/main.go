@@ -9,9 +9,9 @@ import (
 // Example usage
 func main() {
 	users := []User{
-		Anonymous(),                 // this returns a `User` value
-		Member("Alice", time.Now()), // this also returns a `User` value
-		Admin("Bob"),                // this also returns a `User` value
+		Anonymous(CreditCard("xxx1234", time.Now())),                   // this returns a `User` value
+		Member(CreditCard("xxx1234", time.Now()), "Alice", time.Now()), // this also returns a `User` value
+		Admin(Paypal("nobody@example.com"), "Bob"),                     // this also returns a `User` value
 	}
 
 	for i, user := range users {
@@ -40,14 +40,14 @@ func main() {
 func UserString(u User) string {
 	var result string
 	u.Switch(UserScenarios{
-		Anonymous: func() {
-			result = "Anonymous coward"
+		Anonymous: func(paymentMethod PaymentMethod) {
+			result = "Anonymous coward" + fmt.Sprintf("%#v", paymentMethod)
 		},
-		Member: func(email string, since time.Time) {
-			result = email + " (member since " + since.String() + ")"
+		Member: func(paymentMethod PaymentMethod, email string, since time.Time) {
+			result = email + " (member since " + since.String() + ")" + fmt.Sprintf("%#v", paymentMethod)
 		},
-		Admin: func(email string) {
-			result = email + " (admin)"
+		Admin: func(paymentMethod PaymentMethod, email string) {
+			result = email + " (admin)" + fmt.Sprintf("%#v", paymentMethod)
 		},
 	})
 	return result
