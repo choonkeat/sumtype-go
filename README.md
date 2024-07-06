@@ -46,20 +46,36 @@ users := []User{
 }
 ```
 
-and we can write functions that work with `User`
+and we can pattern match `User` values
 
 ```go
-func UserString(u User) string {
+userString := UserMap(user, UserVariantsT[string]{
+	Anonymous: func() string {
+		return "Anonymous coward"
+	},
+	Member: func(email string, since time.Time) string {
+		return email + " (member since " + since.String() + ")"
+	},
+	Admin: func(email string) string {
+		return email + " (admin)"
+	},
+})
+```
+
+and do different things depending on variants
+
+```go
+func SendReply(u User, comment Comment) string {
 	var result string
 	u.Match(UserVariants{
 		Anonymous: func() {
-			result = "Anonymous coward"
+			// noop
 		},
 		Member: func(email string, since time.Time) {
-			result = email + " (member since " + since.String() + ")"
+			sendEmail(email, comment)
 		},
 		Admin: func(email string) {
-			result = email + " (admin)"
+			sendEmail(email, comment)
 		},
 	})
 	return result
