@@ -17,6 +17,22 @@ func main() {
 	for i, user := range users {
 		log.Println(i, UserString(user))
 	}
+	// map
+	userCodes := []int{}
+	for _, user := range users {
+		userCodes = append(userCodes, UserMap(user, UserVariantsT[int]{
+			Anonymous: func(paymentMethod PaymentMethod) int {
+				return 1
+			},
+			Member: func(email string, since time.Time) int {
+				return 20
+			},
+			Admin: func(email string) int {
+				return 300
+			},
+		}))
+	}
+	fmt.Println("User -> Int userCodes =", userCodes)
 
 	results := []Result[string, int]{
 		Err[string, int]("Oops err"), // this returns a `Result` value
@@ -26,6 +42,19 @@ func main() {
 	for i, result := range results {
 		HandleResult(i, result)
 	}
+	// map
+	resultCodes := []int{}
+	for _, result := range results {
+		resultCodes = append(resultCodes, ResultMap(result, ResultVariantsT[string, int, int]{
+			Err: func(err string) int {
+				return -1
+			},
+			Ok: func(data int) int {
+				return data
+			},
+		}))
+	}
+	fmt.Println("Result -> Int resultCodes =", resultCodes)
 
 	trees := []Tree[int]{
 		Branch[int](Leaf[int](1), Leaf[int](2)), // this returns a `Tree` value
@@ -35,6 +64,34 @@ func main() {
 	for i, tree := range trees {
 		log.Println(i, TreeString(tree))
 	}
+
+	// map
+	treeValues := []int{}
+	for _, tree := range trees {
+		treeValues = append(treeValues, TreeMap(tree, TreeVariantsT[int, int]{
+			Branch: func(leftArg Tree[int], rightArg Tree[int]) int {
+				return TreeMap(leftArg, TreeVariantsT[int, int]{
+					Branch: func(leftArg Tree[int], rightArg Tree[int]) int {
+						return 0
+					},
+					Leaf: func(sArg int) int {
+						return sArg
+					},
+				}) + TreeMap(rightArg, TreeVariantsT[int, int]{
+					Branch: func(leftArg Tree[int], rightArg Tree[int]) int {
+						return 0
+					},
+					Leaf: func(sArg int) int {
+						return sArg
+					},
+				})
+			},
+			Leaf: func(sArg int) int {
+				return sArg
+			},
+		}))
+	}
+	fmt.Println("Tree -> Int treeValues =", treeValues)
 }
 
 func UserString(user User) string {
