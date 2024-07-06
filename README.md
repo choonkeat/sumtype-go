@@ -49,7 +49,7 @@ users := []User{
 and we can pattern match `User` values
 
 ```go
-userString := UserMap(user, UserVariantsT[string]{
+userString := UserMap(user, UserVariantsMap[string]{
 	Anonymous: func() string {
 		return "Anonymous coward"
 	},

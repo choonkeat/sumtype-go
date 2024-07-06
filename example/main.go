@@ -20,7 +20,7 @@ func main() {
 	// map
 	userCodes := []int{}
 	for _, user := range users {
-		userCodes = append(userCodes, UserMap(user, UserVariantsT[int]{
+		userCodes = append(userCodes, UserMap(user, UserVariantsMap[int]{
 			Anonymous: func(paymentMethod PaymentMethod) int {
 				return 1
 			},
@@ -45,7 +45,7 @@ func main() {
 	// map
 	resultCodes := []int{}
 	for _, result := range results {
-		resultCodes = append(resultCodes, ResultMap(result, ResultVariantsT[string, int, int]{
+		resultCodes = append(resultCodes, ResultMap(result, ResultVariantsMap[string, int, int]{
 			Err: func(err string) int {
 				return -1
 			},
@@ -68,16 +68,16 @@ func main() {
 	// map
 	treeValues := []int{}
 	for _, tree := range trees {
-		treeValues = append(treeValues, TreeMap(tree, TreeVariantsT[int, int]{
+		treeValues = append(treeValues, TreeMap(tree, TreeVariantsMap[int, int]{
 			Branch: func(leftArg Tree[int], rightArg Tree[int]) int {
-				return TreeMap(leftArg, TreeVariantsT[int, int]{
+				return TreeMap(leftArg, TreeVariantsMap[int, int]{
 					Branch: func(leftArg Tree[int], rightArg Tree[int]) int {
 						return 0
 					},
 					Leaf: func(sArg int) int {
 						return sArg
 					},
-				}) + TreeMap(rightArg, TreeVariantsT[int, int]{
+				}) + TreeMap(rightArg, TreeVariantsMap[int, int]{
 					Branch: func(leftArg Tree[int], rightArg Tree[int]) int {
 						return 0
 					},

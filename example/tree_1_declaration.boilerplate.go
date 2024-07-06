@@ -28,12 +28,12 @@ func Leaf[T any](sArg T) Tree[T] {
 	return leafTreeVariants[T]{sArg}
 }
 
-type TreeVariantsT[T, A any] struct {
+type TreeVariantsMap[T, A any] struct {
 	Branch func(leftArg Tree[T], rightArg Tree[T]) A
 	Leaf   func(sArg T) A
 }
 
-func TreeMap[T, A any](value Tree[T], variants TreeVariantsT[T, A]) A {
+func TreeMap[T, A any](value Tree[T], variants TreeVariantsMap[T, A]) A {
 	var result A
 	value.Match(TreeVariants[T]{
 		Branch: func(leftArg Tree[T], rightArg Tree[T]) {

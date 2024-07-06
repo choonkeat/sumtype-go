@@ -80,14 +80,14 @@ func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 		// Generate generic variant
 		genericT := newGenericType(generics, "any")
 		combinedGenerics := append(generics, genericT)
-		fmt.Fprintf(builder, "\ntype %sT%s struct{\n", typeName, buildGenericTypeDeclaration(combinedGenerics))
+		fmt.Fprintf(builder, "\ntype %sMap%s struct{\n", typeName, buildGenericTypeDeclaration(combinedGenerics))
 		for _, data := range dataList {
 			fmt.Fprintf(builder, "\t%s func(%s) %s\n", data.Name, getParamList("Arg", data.Fields), genericT.Name)
 		}
 		fmt.Fprintf(builder, "}\n\n")
 
 		// Generate Mapping function
-		fmt.Fprintf(builder, "func %sMap%s(value %s%s, variants %sT%s) %s {\n",
+		fmt.Fprintf(builder, "func %sMap%s(value %s%s, variants %sMap%s) %s {\n",
 			mainTypeName,
 			buildGenericTypeDeclaration(combinedGenerics),
 			mainTypeName,
