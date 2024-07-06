@@ -26,3 +26,21 @@ func (s okResultVariants[x, a]) Match(variants ResultVariants[x, a]) {
 func Ok[x, a any](dataArg a) Result[x, a] {
 	return okResultVariants[x, a]{dataArg}
 }
+
+type ResultVariantsT[x, a, A any] struct {
+	Err func(errArg x) A
+	Ok  func(dataArg a) A
+}
+
+func ResultMap[x, a, A any](value Result[x, a], variants ResultVariantsT[x, a, A]) A {
+	var result A
+	value.Match(ResultVariants[x, a]{
+		Err: func(errArg x) {
+			result = variants.Err(errArg)
+		},
+		Ok: func(dataArg a) {
+			result = variants.Ok(dataArg)
+		},
+	})
+	return result
+}

@@ -25,7 +25,11 @@ func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 	for _, row := range mapToSortedSlice(parsedFile.Data) {
 		typeName := row.key
 		dataList := row.value
+		mainTypeName := strings.TrimSuffix(typeName, flags.structSuffix)
+
+		generics := []ParsedGeneric{}
 		for _, data := range dataList {
+			generics = data.Generics // keep it for later
 			structName := unexported(data.Name) + typeName
 			genericsDecl := buildGenericTypeDeclaration(data.Generics)
 			paramList := buildParameterListDeclaration(data.Generics)
@@ -57,7 +61,7 @@ func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 				data.Name,
 				genericsDecl,
 				getParamList("Arg", data.Fields),
-				strings.TrimSuffix(typeName, flags.structSuffix),
+				mainTypeName,
 				paramList,
 			)
 			if len(data.Fields) > 0 {
@@ -72,6 +76,36 @@ func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 			}
 			fmt.Fprintf(builder, "}\n")
 		}
+
+		// Generate generic variant
+		genericT := newGenericType(generics, "any")
+		combinedGenerics := append(generics, genericT)
+		fmt.Fprintf(builder, "\ntype %sT%s struct{\n", typeName, buildGenericTypeDeclaration(combinedGenerics))
+		for _, data := range dataList {
+			fmt.Fprintf(builder, "\t%s func(%s) %s\n", data.Name, getParamList("Arg", data.Fields), genericT.Name)
+		}
+		fmt.Fprintf(builder, "}\n\n")
+
+		// Generate Mapping function
+		fmt.Fprintf(builder, "func %sMap%s(value %s%s, variants %sT%s) %s {\n",
+			mainTypeName,
+			buildGenericTypeDeclaration(combinedGenerics),
+			mainTypeName,
+			buildParameterListDeclaration(generics),
+			typeName,
+			buildParameterListDeclaration(combinedGenerics),
+			genericT.Name,
+		)
+		fmt.Fprintf(builder, "\tvar result %s\n", genericT.Name)
+		fmt.Fprintf(builder, "\tvalue.Match(%s%s{\n", typeName, buildParameterListDeclaration(generics))
+		for _, data := range dataList {
+			fmt.Fprintf(builder, "\t\t%s: func(%s) {\n", data.Name, getParamList("Arg", data.Fields))
+			fmt.Fprintf(builder, "\t\t\tresult = variants.%s(%s)\n", data.Name, strings.Join(getFieldNames("Arg", data.Fields), ", "))
+			fmt.Fprintf(builder, "\t\t},\n")
+		}
+		fmt.Fprintf(builder, "\t})\n")
+		fmt.Fprintf(builder, "\treturn result\n")
+		fmt.Fprintf(builder, "}\n\n")
 	}
 }
 
@@ -137,6 +171,24 @@ func buildParameterListDeclaration(data []ParsedGeneric) string {
 		names = append(names, d.Name)
 	}
 	return "[" + strings.Join(names, ", ") + "]"
+}
+
+func newGenericType(generics []ParsedGeneric, constraint string) ParsedGeneric {
+	// find a letter that is not already used
+	used := make(map[rune]bool)
+	for _, g := range generics {
+		used[rune(g.Name[0])] = true
+	}
+
+	var name string
+	for i := 'A'; i <= 'Z'; i++ {
+		if !used[i] {
+			name = string(i)
+			break
+		}
+	}
+
+	return ParsedGeneric{Name: name, Constraint: constraint}
 }
 
 // Define the tuple struct as a generic type

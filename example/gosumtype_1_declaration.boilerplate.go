@@ -32,6 +32,24 @@ func Paypal(emailArg string) PaymentMethod {
 	return paypalPaymentMethodVariants{emailArg}
 }
 
+type PaymentMethodVariantsT[A any] struct {
+	CreditCard func(numberArg string, expiryArg time.Time) A
+	Paypal     func(emailArg string) A
+}
+
+func PaymentMethodMap[A any](value PaymentMethod, variants PaymentMethodVariantsT[A]) A {
+	var result A
+	value.Match(PaymentMethodVariants{
+		CreditCard: func(numberArg string, expiryArg time.Time) {
+			result = variants.CreditCard(numberArg, expiryArg)
+		},
+		Paypal: func(emailArg string) {
+			result = variants.Paypal(emailArg)
+		},
+	})
+	return result
+}
+
 // Anonymous
 type anonymousUserVariants struct {
 	arg0 PaymentMethod
@@ -70,4 +88,26 @@ func (s adminUserVariants) Match(variants UserVariants) {
 
 func Admin(emailArg string) User {
 	return adminUserVariants{emailArg}
+}
+
+type UserVariantsT[A any] struct {
+	Anonymous func(arg0Arg PaymentMethod) A
+	Member    func(emailArg string, sinceArg time.Time) A
+	Admin     func(emailArg string) A
+}
+
+func UserMap[A any](value User, variants UserVariantsT[A]) A {
+	var result A
+	value.Match(UserVariants{
+		Anonymous: func(arg0Arg PaymentMethod) {
+			result = variants.Anonymous(arg0Arg)
+		},
+		Member: func(emailArg string, sinceArg time.Time) {
+			result = variants.Member(emailArg, sinceArg)
+		},
+		Admin: func(emailArg string) {
+			result = variants.Admin(emailArg)
+		},
+	})
+	return result
 }
