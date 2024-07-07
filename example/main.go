@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
 	"time"
 )
 
@@ -15,24 +16,24 @@ func main() {
 	}
 
 	for i, user := range users {
-		log.Println(i, UserString(user))
+		printUserString(i, user)
 	}
+
 	// map
-	userCodes := []int{}
-	for _, user := range users {
-		userCodes = append(userCodes, UserMap(user, UserVariantsMap[int]{
-			Anonymous: func(paymentMethod PaymentMethod) int {
-				return 1
-			},
-			Member: func(email string, since time.Time) int {
-				return 20
-			},
-			Admin: func(email string) int {
-				return 300
-			},
-		}))
+	userToCode := UserVariantsMap[int]{
+		Anonymous: func(paymentMethod PaymentMethod) int {
+			return 1
+		},
+		Member: func(email string, since time.Time) int {
+			return 20
+		},
+		Admin: func(email string) int {
+			return 300
+		},
 	}
-	fmt.Println("User -> Int userCodes =", userCodes)
+	for i, user := range users {
+		log.Printf("%d UserMap: %#v -> %d\n", i, user, UserMap(user, userToCode))
+	}
 
 	results := []Result[string, int]{
 		Err[string, int]("Oops err"), // this returns a `Result` value
@@ -40,77 +41,57 @@ func main() {
 	}
 
 	for i, result := range results {
-		HandleResult(i, result)
+		printHandleResult(i, result)
 	}
+
 	// map
-	resultCodes := []int{}
-	for _, result := range results {
-		resultCodes = append(resultCodes, ResultMap(result, ResultVariantsMap[string, int, int]{
-			Err: func(err string) int {
-				return -1
-			},
-			Ok: func(data int) int {
-				return data
-			},
-		}))
+	resultToCode := ResultVariantsMap[string, int, int]{
+		Err: func(err string) int {
+			return -1
+		},
+		Ok: func(data int) int {
+			return data
+		},
 	}
-	fmt.Println("Result -> Int resultCodes =", resultCodes)
+	for i, result := range results {
+		log.Printf("%d ResultMap: %#v -> %d\n", i, result, ResultMap(result, resultToCode))
+	}
 
 	trees := []Tree[int]{
-		Branch[int](Leaf[int](1), Leaf[int](2)), // this returns a `Tree` value
-		Leaf[int](3),                            // this also returns a `Tree` value
+		Branch[int](
+			Leaf[int](1),
+			Branch[int](
+				Leaf[int](42),
+				Leaf[int](2),
+			)), // this returns a `Tree` value
+		Leaf[int](3), // this also returns a `Tree` value
 	}
 
-	for i, tree := range trees {
-		log.Println(i, TreeString(tree))
+	for _, tree := range trees {
+		printTreeString(0, tree)
 	}
 
 	// map
-	treeValues := []int{}
-	for _, tree := range trees {
-		treeValues = append(treeValues, TreeMap(tree, TreeVariantsMap[int, int]{
-			Branch: func(leftArg Tree[int], rightArg Tree[int]) int {
-				return TreeMap(leftArg, TreeVariantsMap[int, int]{
-					Branch: func(leftArg Tree[int], rightArg Tree[int]) int {
-						return 0
-					},
-					Leaf: func(sArg int) int {
-						return sArg
-					},
-				}) + TreeMap(rightArg, TreeVariantsMap[int, int]{
-					Branch: func(leftArg Tree[int], rightArg Tree[int]) int {
-						return 0
-					},
-					Leaf: func(sArg int) int {
-						return sArg
-					},
-				})
-			},
-			Leaf: func(sArg int) int {
-				return sArg
-			},
-		}))
+	for i, tree := range trees {
+		log.Printf("%d TreeMap: %#v -> %f\n", i, tree, DepthOf(tree))
 	}
-	fmt.Println("Tree -> Int treeValues =", treeValues)
 }
 
-func UserString(user User) string {
-	var result string
+func printUserString(i int, user User) {
 	user.Match(UserVariants{
 		Anonymous: func(paymentMethod PaymentMethod) {
-			result = "Anonymous coward" + fmt.Sprintf("%#v", paymentMethod)
+			log.Println(i, "Anonymous coward"+fmt.Sprintf("%#v", paymentMethod))
 		},
 		Member: func(email string, since time.Time) {
-			result = email + " (member since " + since.String() + ")"
+			log.Println(i, email+" (member since "+since.String()+")")
 		},
 		Admin: func(email string) {
-			result = email + " (admin)"
+			log.Println(i, email+" (admin)")
 		},
 	})
-	return result
 }
 
-func HandleResult(i int, result Result[string, int]) {
+func printHandleResult(i int, result Result[string, int]) {
 	result.Match(ResultVariants[string, int]{
 		Err: func(err string) {
 			log.Println(i, "Error:", err)
@@ -121,15 +102,27 @@ func HandleResult(i int, result Result[string, int]) {
 	})
 }
 
-func TreeString(t Tree[int]) string {
-	var result string
+func printTreeString(i int, t Tree[int]) {
+	format := "%" + fmt.Sprintf("%d", i*2) + "s %s\n"
 	t.Match(TreeVariants[int]{
 		Branch: func(left, right Tree[int]) {
-			result = "Branch(" + TreeString(left) + ", " + TreeString(right) + ")"
+			log.Printf(format, "-", "Branch")
+			printTreeString(i+1, left)
+			printTreeString(i+1, right)
 		},
 		Leaf: func(s int) {
-			result = fmt.Sprintf("Leaf(%d)", s)
+			log.Printf(format, "-", fmt.Sprintf("Leaf(%d)", s))
 		},
 	})
-	return result
+}
+
+func DepthOf(t Tree[int]) float64 {
+	return TreeMap(t, TreeVariantsMap[int, float64]{
+		Branch: func(left, right Tree[int]) float64 {
+			return 1 + math.Max(DepthOf(left), DepthOf(right))
+		},
+		Leaf: func(s int) float64 {
+			return 1
+		},
+	})
 }

@@ -56,6 +56,12 @@ func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 			fmt.Fprintf(builder, "}\n\n")
 
 			// Generate constructor function
+			fmt.Fprintf(builder, "\n// %s is a constructor function for %s; see %s for all constructor functions of %s\n",
+				data.Name,
+				mainTypeName,
+				typeName,
+				mainTypeName,
+			)
 			fmt.Fprintf(builder,
 				"func %s%s(%s) %s%s {\n",
 				data.Name,
@@ -78,15 +84,32 @@ func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 		}
 
 		// Generate generic variant
+		fmt.Fprintf(builder, "\n// %sMap is parameter type of %sMap function,\n// like %s is parameter type of %s.Match method,\n// but with methods that returns a value of generic type\n",
+			typeName,
+			mainTypeName,
+			typeName,
+			unexported(mainTypeName),
+		)
 		genericT := newGenericType(generics, "any")
 		combinedGenerics := append(generics, genericT)
-		fmt.Fprintf(builder, "\ntype %sMap%s struct{\n", typeName, buildGenericTypeDeclaration(combinedGenerics))
+		fmt.Fprintf(builder, "type %sMap%s struct{\n", typeName, buildGenericTypeDeclaration(combinedGenerics))
 		for _, data := range dataList {
-			fmt.Fprintf(builder, "\t%s func(%s) %s\n", data.Name, getParamList("Arg", data.Fields), genericT.Name)
+			fmt.Fprintf(builder, "\t%s func(%s) %s // when %s value pattern matches to %s, return different value\n",
+				data.Name,
+				getParamList("Arg", data.Fields),
+				genericT.Name,
+				mainTypeName,
+				data.Name,
+			)
 		}
 		fmt.Fprintf(builder, "}\n\n")
 
 		// Generate Mapping function
+		fmt.Fprintf(builder, "\n// %sMap is like %s.Match method except it returns a value of generic type\n// thus can transform a %s value into anything else\n",
+			mainTypeName,
+			unexported(mainTypeName),
+			mainTypeName,
+		)
 		fmt.Fprintf(builder, "func %sMap%s(value %s%s, variants %sMap%s) %s {\n",
 			mainTypeName,
 			buildGenericTypeDeclaration(combinedGenerics),
