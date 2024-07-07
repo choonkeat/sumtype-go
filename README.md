@@ -46,7 +46,7 @@ users := []User{
 }
 ```
 
-and we can pattern match `User` values
+and we can pattern match `User` values and return a different value depending on pattern matched variant
 
 ```go
 userString := UserMap(user, UserVariantsMap[string]{
@@ -62,11 +62,10 @@ userString := UserMap(user, UserVariantsMap[string]{
 })
 ```
 
-and do different things depending on variants
+or _do_ different things depending on pattern matched variant
 
 ```go
-func SendReply(u User, comment Comment) string {
-	var result string
+func SendReply(u User, comment Comment) {
 	u.Match(UserVariants{
 		Anonymous: func() {
 			// noop
@@ -78,7 +77,6 @@ func SendReply(u User, comment Comment) string {
 			sendEmail(email, comment)
 		},
 	})
-	return result
 }
 ```
 
