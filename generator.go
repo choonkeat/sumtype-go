@@ -52,15 +52,20 @@ func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 			fmt.Fprintf(builder, "}\n\n")
 
 			// Generate method
-			fmt.Fprintf(builder, "func (s %s%s) %s(variants %s%s) {\n", structName, paramList, flags.patternMatchFunction, typeName, paramList)
+			fmt.Fprintf(builder, "func (%sInstance %s%s) %s(%sVariants %s%s) {\n",
+				unexported(data.Name),
+				structName, paramList, flags.patternMatchFunction,
+				unexported(data.Name), typeName, paramList)
 			if len(data.Fields) > 0 {
 				fmt.Fprintf(builder,
-					"\tvariants.%s(s.%s)\n",
+					"\t%sVariants.%s(%sInstance.%s)\n",
+					unexported(data.Name),
 					data.Name,
-					strings.Join(getFieldNames("", data.Fields), ", s."),
+					unexported(data.Name),
+					strings.Join(getFieldNames("", data.Fields), ", "+unexported(data.Name)+"Instance."),
 				)
 			} else {
-				fmt.Fprintf(builder, "\tvariants.%s()\n", data.Name)
+				fmt.Fprintf(builder, "\t%sVariants.%s()\n", unexported(data.Name), data.Name)
 			}
 			fmt.Fprintf(builder, "}\n\n")
 
@@ -121,24 +126,26 @@ func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 			unexported(mainTypeName),
 			mainTypeName,
 		)
-		fmt.Fprintf(builder, "func %sMap%s(value %s%s, variants %sMap%s) %s {\n",
+		fmt.Fprintf(builder, "func %sMap%s(%sValue %s%s, %sVariants %sMap%s) %s {\n",
 			mainTypeName,
 			buildGenericTypeDeclaration(combinedGenerics),
+			unexported(mainTypeName),
 			mainTypeName,
 			buildParameterListDeclaration(generics),
+			unexported(mainTypeName),
 			typeName,
 			buildParameterListDeclaration(combinedGenerics),
 			genericT.Name,
 		)
-		fmt.Fprintf(builder, "\tvar result %s\n", genericT.Name)
-		fmt.Fprintf(builder, "\tvalue.Match(%s%s{\n", typeName, buildParameterListDeclaration(generics))
+		fmt.Fprintf(builder, "\tvar %sTemp %s\n", unexported(mainTypeName), genericT.Name)
+		fmt.Fprintf(builder, "\t%sValue.Match(%s%s{\n", unexported(mainTypeName), typeName, buildParameterListDeclaration(generics))
 		for _, data := range dataList {
 			fmt.Fprintf(builder, "\t\t%s: func(%s) {\n", data.Name, getParamList("Arg", data.Fields))
-			fmt.Fprintf(builder, "\t\t\tresult = variants.%s(%s)\n", data.Name, strings.Join(getFieldNames("Arg", data.Fields), ", "))
+			fmt.Fprintf(builder, "\t\t\t%sTemp = %sVariants.%s(%s)\n", unexported(mainTypeName), unexported(mainTypeName), data.Name, strings.Join(getFieldNames("Arg", data.Fields), ", "))
 			fmt.Fprintf(builder, "\t\t},\n")
 		}
 		fmt.Fprintf(builder, "\t})\n")
-		fmt.Fprintf(builder, "\treturn result\n")
+		fmt.Fprintf(builder, "\treturn %sTemp\n", unexported(mainTypeName))
 		fmt.Fprintf(builder, "}\n\n")
 
 		variantNames := make([]string, len(dataList))
@@ -159,17 +166,17 @@ func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 		fmt.Fprintf(builder, "}\n")
 
 		// Generate Match method of JSON struct
-		fmt.Fprintf(builder, "func (s %s%s) Match(variants %s%s) {\n", mainTypeName, paramList, typeName, paramList)
-		fmt.Fprintf(builder, "\ts.%s.Match(variants)\n", unexported(mainTypeName))
+		fmt.Fprintf(builder, "func (%sInstance %s%s) Match(%sVariants %s%s) {\n", unexported(mainTypeName), mainTypeName, paramList, unexported(mainTypeName), typeName, paramList)
+		fmt.Fprintf(builder, "\t%sInstance.%s.Match(%sVariants)\n", unexported(mainTypeName), unexported(mainTypeName), unexported(mainTypeName))
 		fmt.Fprintf(builder, "}\n")
 
 		// Generate MarshalJSON method for {mainTypeName}JSON
-		fmt.Fprintf(builder, "func (s %s%s) MarshalJSON() (data []byte, err error) {\n", mainTypeName, paramList)
-		fmt.Fprintf(builder, "\ts.%s.Match(%s%s{\n", unexported(mainTypeName), typeName, paramList)
+		fmt.Fprintf(builder, "func (%sInstance %s%s) MarshalJSON() (%sData []byte, %sErr error) {\n", unexported(mainTypeName), mainTypeName, paramList, unexported(mainTypeName), unexported(mainTypeName))
+		fmt.Fprintf(builder, "\t%sInstance.%s.Match(%s%s{\n", unexported(mainTypeName), unexported(mainTypeName), typeName, paramList)
 		for _, data := range dataList {
 			structName := unexported(data.Name) + typeName
 			fmt.Fprintf(builder, "\t\t%s: func(%s) {\n", data.Name, getParamList("Arg", data.Fields))
-			fmt.Fprintf(builder, "\t\t\tdata, err = json.Marshal([]any{\n")
+			fmt.Fprintf(builder, "\t\t\t%sData, %sErr = json.Marshal([]any{\n", unexported(mainTypeName), unexported(mainTypeName))
 			fmt.Fprintf(builder, "\t\t\t\t%#v,\n", data.Name)
 			fmt.Fprintf(builder, "\t\t\t\t%s%s{\n", structName, paramList)
 			for _, field := range data.Fields {
@@ -179,43 +186,43 @@ func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 			fmt.Fprintf(builder, "\t\t},\n")
 		}
 		fmt.Fprintf(builder, "\t})\n")
-		fmt.Fprintf(builder, "\treturn data, err\n")
+		fmt.Fprintf(builder, "\treturn %sData, %sErr\n", unexported(mainTypeName), unexported(mainTypeName))
 		fmt.Fprintf(builder, "}\n")
 
 		// Generate UnmarshalJSON method for {mainTypeName}JSON
-		fmt.Fprintf(builder, "func (s *%s%s) UnmarshalJSON(data []byte) error {\n", mainTypeName, paramList)
+		fmt.Fprintf(builder, "func (%sInstance *%s%s) UnmarshalJSON(%sData []byte) error {\n", unexported(mainTypeName), mainTypeName, paramList, unexported(mainTypeName))
 		fmt.Fprintf(builder, "\t// The expected format is [\"TypeName\", { ... data... }]\n")
-		fmt.Fprintf(builder, "\tvar raw []json.RawMessage\n")
-		fmt.Fprintf(builder, "\tif err := json.Unmarshal(data, &raw); err != nil {\n")
+		fmt.Fprintf(builder, "\tvar %sRaw []json.RawMessage\n", unexported(mainTypeName))
+		fmt.Fprintf(builder, "\tif err := json.Unmarshal(%sData, &%sRaw); err != nil {\n", unexported(mainTypeName), unexported(mainTypeName))
 		fmt.Fprintf(builder, "\treturn fmt.Errorf(\"expected an array with type and data, got error: %%w\", err)\n")
 		fmt.Fprintf(builder, "\t}\n")
 
-		fmt.Fprintf(builder, "\tif len(raw) != 2 {\n")
-		fmt.Fprintf(builder, "\treturn fmt.Errorf(\"expected array of two elements [type, data], got %%d elements\", len(raw))\n")
+		fmt.Fprintf(builder, "\tif len(%sRaw) != 2 {\n", unexported(mainTypeName))
+		fmt.Fprintf(builder, "\treturn fmt.Errorf(\"expected array of two elements [type, data], got %%d elements\", len(%sRaw))\n", unexported(mainTypeName))
 		fmt.Fprintf(builder, "\t}\n")
 
 		fmt.Fprintf(builder, "\t// Unmarshal the first element to get the type\n")
-		fmt.Fprintf(builder, "\tvar typeName string\n")
-		fmt.Fprintf(builder, "\tif err := json.Unmarshal(raw[0], &typeName); err != nil {\n")
+		fmt.Fprintf(builder, "\tvar %sVariantName string\n", unexported(mainTypeName))
+		fmt.Fprintf(builder, "\tif err := json.Unmarshal(%sRaw[0], &%sVariantName); err != nil {\n", unexported(mainTypeName), unexported(mainTypeName))
 		fmt.Fprintf(builder, "\treturn fmt.Errorf(\"failed to unmarshal type name: %%w\", err)\n")
 		fmt.Fprintf(builder, "\t}\n")
 
-		fmt.Fprintf(builder, "\tswitch typeName {\n")
+		fmt.Fprintf(builder, "\tswitch %sVariantName {\n", unexported(mainTypeName))
 		for _, data := range dataList {
 			structName := unexported(data.Name) + typeName
 			fmt.Fprintf(builder, "\tcase %#v:\n", data.Name)
-			fmt.Fprintf(builder, "\tvar temp %s%s\n", structName, paramList)
-			fmt.Fprintf(builder, "\tif err := json.Unmarshal(raw[1], &temp); err != nil {\n")
+			fmt.Fprintf(builder, "\tvar %sTemp %s%s\n", unexported(mainTypeName), structName, paramList)
+			fmt.Fprintf(builder, "\tif err := json.Unmarshal(%sRaw[1], &%sTemp); err != nil {\n", unexported(mainTypeName), unexported(mainTypeName))
 			fmt.Fprintf(builder, "\treturn fmt.Errorf(\"failed to unmarshal data: %%w\", err)\n")
 			fmt.Fprintf(builder, "\t}\n")
-			fmt.Fprintf(builder, "\ts.%s = %s%s{\n", unexported(mainTypeName), structName, paramList)
+			fmt.Fprintf(builder, "\t%sInstance.%s = %s%s{\n", unexported(mainTypeName), unexported(mainTypeName), structName, paramList)
 			for _, field := range data.Fields {
-				fmt.Fprintf(builder, "\t\t%s: temp.%s,\n", exported(field.Name), exported(field.Name))
+				fmt.Fprintf(builder, "\t\t%s: %sTemp.%s,\n", exported(field.Name), unexported(mainTypeName), exported(field.Name))
 			}
 			fmt.Fprintf(builder, "\t}\n")
 		}
 		fmt.Fprintf(builder, "\tdefault:\n")
-		fmt.Fprintf(builder, "\treturn fmt.Errorf(\"unknown type %%q\", typeName)\n")
+		fmt.Fprintf(builder, "\treturn fmt.Errorf(\"unknown type %%q\", %sVariantName)\n", unexported(mainTypeName))
 		fmt.Fprintf(builder, "\t}\n")
 		fmt.Fprintf(builder, "\treturn nil\n")
 		fmt.Fprintf(builder, "\t}\n")

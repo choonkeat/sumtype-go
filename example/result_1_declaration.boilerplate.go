@@ -11,8 +11,8 @@ type errResultVariants[x, a any] struct {
 	Err x
 }
 
-func (s errResultVariants[x, a]) Match(variants ResultVariants[x, a]) {
-	variants.Err(s.Err)
+func (errInstance errResultVariants[x, a]) Match(errVariants ResultVariants[x, a]) {
+	errVariants.Err(errInstance.Err)
 }
 
 // Err is a constructor function for Result; see ResultVariants for all constructor functions of Result
@@ -25,8 +25,8 @@ type okResultVariants[x, a any] struct {
 	Data a
 }
 
-func (s okResultVariants[x, a]) Match(variants ResultVariants[x, a]) {
-	variants.Ok(s.Data)
+func (okInstance okResultVariants[x, a]) Match(okVariants ResultVariants[x, a]) {
+	okVariants.Ok(okInstance.Data)
 }
 
 // Ok is a constructor function for Result; see ResultVariants for all constructor functions of Result
@@ -44,17 +44,17 @@ type ResultVariantsMap[x, a, A any] struct {
 
 // ResultMap is like result.Match method except it returns a value of generic type
 // thus can transform a Result value into anything else
-func ResultMap[x, a, A any](value Result[x, a], variants ResultVariantsMap[x, a, A]) A {
-	var result A
-	value.Match(ResultVariants[x, a]{
+func ResultMap[x, a, A any](resultValue Result[x, a], resultVariants ResultVariantsMap[x, a, A]) A {
+	var resultTemp A
+	resultValue.Match(ResultVariants[x, a]{
 		Err: func(errArg x) {
-			result = variants.Err(errArg)
+			resultTemp = resultVariants.Err(errArg)
 		},
 		Ok: func(dataArg a) {
-			result = variants.Ok(dataArg)
+			resultTemp = resultVariants.Ok(dataArg)
 		},
 	})
-	return result
+	return resultTemp
 }
 
 // Result = Err | Ok
@@ -67,61 +67,61 @@ type result[x, a any] interface {
 	Match(variants ResultVariants[x, a])
 }
 
-func (s Result[x, a]) Match(variants ResultVariants[x, a]) {
-	s.result.Match(variants)
+func (resultInstance Result[x, a]) Match(resultVariants ResultVariants[x, a]) {
+	resultInstance.result.Match(resultVariants)
 }
-func (s Result[x, a]) MarshalJSON() (data []byte, err error) {
-	s.result.Match(ResultVariants[x, a]{
+func (resultInstance Result[x, a]) MarshalJSON() (resultData []byte, resultErr error) {
+	resultInstance.result.Match(ResultVariants[x, a]{
 		Err: func(errArg x) {
-			data, err = json.Marshal([]any{
+			resultData, resultErr = json.Marshal([]any{
 				"Err",
 				errResultVariants[x, a]{
 					Err: errArg,
 				}})
 		},
 		Ok: func(dataArg a) {
-			data, err = json.Marshal([]any{
+			resultData, resultErr = json.Marshal([]any{
 				"Ok",
 				okResultVariants[x, a]{
 					Data: dataArg,
 				}})
 		},
 	})
-	return data, err
+	return resultData, resultErr
 }
-func (s *Result[x, a]) UnmarshalJSON(data []byte) error {
+func (resultInstance *Result[x, a]) UnmarshalJSON(resultData []byte) error {
 	// The expected format is ["TypeName", { ... data... }]
-	var raw []json.RawMessage
-	if err := json.Unmarshal(data, &raw); err != nil {
+	var resultRaw []json.RawMessage
+	if err := json.Unmarshal(resultData, &resultRaw); err != nil {
 		return fmt.Errorf("expected an array with type and data, got error: %w", err)
 	}
-	if len(raw) != 2 {
-		return fmt.Errorf("expected array of two elements [type, data], got %d elements", len(raw))
+	if len(resultRaw) != 2 {
+		return fmt.Errorf("expected array of two elements [type, data], got %d elements", len(resultRaw))
 	}
 	// Unmarshal the first element to get the type
-	var typeName string
-	if err := json.Unmarshal(raw[0], &typeName); err != nil {
+	var resultVariantName string
+	if err := json.Unmarshal(resultRaw[0], &resultVariantName); err != nil {
 		return fmt.Errorf("failed to unmarshal type name: %w", err)
 	}
-	switch typeName {
+	switch resultVariantName {
 	case "Err":
-		var temp errResultVariants[x, a]
-		if err := json.Unmarshal(raw[1], &temp); err != nil {
+		var resultTemp errResultVariants[x, a]
+		if err := json.Unmarshal(resultRaw[1], &resultTemp); err != nil {
 			return fmt.Errorf("failed to unmarshal data: %w", err)
 		}
-		s.result = errResultVariants[x, a]{
-			Err: temp.Err,
+		resultInstance.result = errResultVariants[x, a]{
+			Err: resultTemp.Err,
 		}
 	case "Ok":
-		var temp okResultVariants[x, a]
-		if err := json.Unmarshal(raw[1], &temp); err != nil {
+		var resultTemp okResultVariants[x, a]
+		if err := json.Unmarshal(resultRaw[1], &resultTemp); err != nil {
 			return fmt.Errorf("failed to unmarshal data: %w", err)
 		}
-		s.result = okResultVariants[x, a]{
-			Data: temp.Data,
+		resultInstance.result = okResultVariants[x, a]{
+			Data: resultTemp.Data,
 		}
 	default:
-		return fmt.Errorf("unknown type %q", typeName)
+		return fmt.Errorf("unknown type %q", resultVariantName)
 	}
 	return nil
 }

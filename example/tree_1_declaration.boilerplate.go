@@ -12,8 +12,8 @@ type branchTreeVariants[T any] struct {
 	Right Tree[T]
 }
 
-func (s branchTreeVariants[T]) Match(variants TreeVariants[T]) {
-	variants.Branch(s.Left, s.Right)
+func (branchInstance branchTreeVariants[T]) Match(branchVariants TreeVariants[T]) {
+	branchVariants.Branch(branchInstance.Left, branchInstance.Right)
 }
 
 // Branch is a constructor function for Tree; see TreeVariants for all constructor functions of Tree
@@ -26,8 +26,8 @@ type leafTreeVariants[T any] struct {
 	S T
 }
 
-func (s leafTreeVariants[T]) Match(variants TreeVariants[T]) {
-	variants.Leaf(s.S)
+func (leafInstance leafTreeVariants[T]) Match(leafVariants TreeVariants[T]) {
+	leafVariants.Leaf(leafInstance.S)
 }
 
 // Leaf is a constructor function for Tree; see TreeVariants for all constructor functions of Tree
@@ -45,17 +45,17 @@ type TreeVariantsMap[T, A any] struct {
 
 // TreeMap is like tree.Match method except it returns a value of generic type
 // thus can transform a Tree value into anything else
-func TreeMap[T, A any](value Tree[T], variants TreeVariantsMap[T, A]) A {
-	var result A
-	value.Match(TreeVariants[T]{
+func TreeMap[T, A any](treeValue Tree[T], treeVariants TreeVariantsMap[T, A]) A {
+	var treeTemp A
+	treeValue.Match(TreeVariants[T]{
 		Branch: func(leftArg Tree[T], rightArg Tree[T]) {
-			result = variants.Branch(leftArg, rightArg)
+			treeTemp = treeVariants.Branch(leftArg, rightArg)
 		},
 		Leaf: func(sArg T) {
-			result = variants.Leaf(sArg)
+			treeTemp = treeVariants.Leaf(sArg)
 		},
 	})
-	return result
+	return treeTemp
 }
 
 // Tree = Branch | Leaf
@@ -68,13 +68,13 @@ type tree[T any] interface {
 	Match(variants TreeVariants[T])
 }
 
-func (s Tree[T]) Match(variants TreeVariants[T]) {
-	s.tree.Match(variants)
+func (treeInstance Tree[T]) Match(treeVariants TreeVariants[T]) {
+	treeInstance.tree.Match(treeVariants)
 }
-func (s Tree[T]) MarshalJSON() (data []byte, err error) {
-	s.tree.Match(TreeVariants[T]{
+func (treeInstance Tree[T]) MarshalJSON() (treeData []byte, treeErr error) {
+	treeInstance.tree.Match(TreeVariants[T]{
 		Branch: func(leftArg Tree[T], rightArg Tree[T]) {
-			data, err = json.Marshal([]any{
+			treeData, treeErr = json.Marshal([]any{
 				"Branch",
 				branchTreeVariants[T]{
 					Left:  leftArg,
@@ -82,49 +82,49 @@ func (s Tree[T]) MarshalJSON() (data []byte, err error) {
 				}})
 		},
 		Leaf: func(sArg T) {
-			data, err = json.Marshal([]any{
+			treeData, treeErr = json.Marshal([]any{
 				"Leaf",
 				leafTreeVariants[T]{
 					S: sArg,
 				}})
 		},
 	})
-	return data, err
+	return treeData, treeErr
 }
-func (s *Tree[T]) UnmarshalJSON(data []byte) error {
+func (treeInstance *Tree[T]) UnmarshalJSON(treeData []byte) error {
 	// The expected format is ["TypeName", { ... data... }]
-	var raw []json.RawMessage
-	if err := json.Unmarshal(data, &raw); err != nil {
+	var treeRaw []json.RawMessage
+	if err := json.Unmarshal(treeData, &treeRaw); err != nil {
 		return fmt.Errorf("expected an array with type and data, got error: %w", err)
 	}
-	if len(raw) != 2 {
-		return fmt.Errorf("expected array of two elements [type, data], got %d elements", len(raw))
+	if len(treeRaw) != 2 {
+		return fmt.Errorf("expected array of two elements [type, data], got %d elements", len(treeRaw))
 	}
 	// Unmarshal the first element to get the type
-	var typeName string
-	if err := json.Unmarshal(raw[0], &typeName); err != nil {
+	var treeVariantName string
+	if err := json.Unmarshal(treeRaw[0], &treeVariantName); err != nil {
 		return fmt.Errorf("failed to unmarshal type name: %w", err)
 	}
-	switch typeName {
+	switch treeVariantName {
 	case "Branch":
-		var temp branchTreeVariants[T]
-		if err := json.Unmarshal(raw[1], &temp); err != nil {
+		var treeTemp branchTreeVariants[T]
+		if err := json.Unmarshal(treeRaw[1], &treeTemp); err != nil {
 			return fmt.Errorf("failed to unmarshal data: %w", err)
 		}
-		s.tree = branchTreeVariants[T]{
-			Left:  temp.Left,
-			Right: temp.Right,
+		treeInstance.tree = branchTreeVariants[T]{
+			Left:  treeTemp.Left,
+			Right: treeTemp.Right,
 		}
 	case "Leaf":
-		var temp leafTreeVariants[T]
-		if err := json.Unmarshal(raw[1], &temp); err != nil {
+		var treeTemp leafTreeVariants[T]
+		if err := json.Unmarshal(treeRaw[1], &treeTemp); err != nil {
 			return fmt.Errorf("failed to unmarshal data: %w", err)
 		}
-		s.tree = leafTreeVariants[T]{
-			S: temp.S,
+		treeInstance.tree = leafTreeVariants[T]{
+			S: treeTemp.S,
 		}
 	default:
-		return fmt.Errorf("unknown type %q", typeName)
+		return fmt.Errorf("unknown type %q", treeVariantName)
 	}
 	return nil
 }

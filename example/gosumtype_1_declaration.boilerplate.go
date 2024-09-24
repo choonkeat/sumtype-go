@@ -13,8 +13,8 @@ type creditCardPaymentMethodVariants struct {
 	Expiry time.Time
 }
 
-func (s creditCardPaymentMethodVariants) Match(variants PaymentMethodVariants) {
-	variants.CreditCard(s.Number, s.Expiry)
+func (creditCardInstance creditCardPaymentMethodVariants) Match(creditCardVariants PaymentMethodVariants) {
+	creditCardVariants.CreditCard(creditCardInstance.Number, creditCardInstance.Expiry)
 }
 
 // CreditCard is a constructor function for PaymentMethod; see PaymentMethodVariants for all constructor functions of PaymentMethod
@@ -27,8 +27,8 @@ type paypalPaymentMethodVariants struct {
 	Email string
 }
 
-func (s paypalPaymentMethodVariants) Match(variants PaymentMethodVariants) {
-	variants.Paypal(s.Email)
+func (paypalInstance paypalPaymentMethodVariants) Match(paypalVariants PaymentMethodVariants) {
+	paypalVariants.Paypal(paypalInstance.Email)
 }
 
 // Paypal is a constructor function for PaymentMethod; see PaymentMethodVariants for all constructor functions of PaymentMethod
@@ -46,17 +46,17 @@ type PaymentMethodVariantsMap[A any] struct {
 
 // PaymentMethodMap is like paymentMethod.Match method except it returns a value of generic type
 // thus can transform a PaymentMethod value into anything else
-func PaymentMethodMap[A any](value PaymentMethod, variants PaymentMethodVariantsMap[A]) A {
-	var result A
-	value.Match(PaymentMethodVariants{
+func PaymentMethodMap[A any](paymentMethodValue PaymentMethod, paymentMethodVariants PaymentMethodVariantsMap[A]) A {
+	var paymentMethodTemp A
+	paymentMethodValue.Match(PaymentMethodVariants{
 		CreditCard: func(numberArg string, expiryArg time.Time) {
-			result = variants.CreditCard(numberArg, expiryArg)
+			paymentMethodTemp = paymentMethodVariants.CreditCard(numberArg, expiryArg)
 		},
 		Paypal: func(emailArg string) {
-			result = variants.Paypal(emailArg)
+			paymentMethodTemp = paymentMethodVariants.Paypal(emailArg)
 		},
 	})
-	return result
+	return paymentMethodTemp
 }
 
 // PaymentMethod = CreditCard | Paypal
@@ -69,13 +69,13 @@ type paymentMethod interface {
 	Match(variants PaymentMethodVariants)
 }
 
-func (s PaymentMethod) Match(variants PaymentMethodVariants) {
-	s.paymentMethod.Match(variants)
+func (paymentMethodInstance PaymentMethod) Match(paymentMethodVariants PaymentMethodVariants) {
+	paymentMethodInstance.paymentMethod.Match(paymentMethodVariants)
 }
-func (s PaymentMethod) MarshalJSON() (data []byte, err error) {
-	s.paymentMethod.Match(PaymentMethodVariants{
+func (paymentMethodInstance PaymentMethod) MarshalJSON() (paymentMethodData []byte, paymentMethodErr error) {
+	paymentMethodInstance.paymentMethod.Match(PaymentMethodVariants{
 		CreditCard: func(numberArg string, expiryArg time.Time) {
-			data, err = json.Marshal([]any{
+			paymentMethodData, paymentMethodErr = json.Marshal([]any{
 				"CreditCard",
 				creditCardPaymentMethodVariants{
 					Number: numberArg,
@@ -83,49 +83,49 @@ func (s PaymentMethod) MarshalJSON() (data []byte, err error) {
 				}})
 		},
 		Paypal: func(emailArg string) {
-			data, err = json.Marshal([]any{
+			paymentMethodData, paymentMethodErr = json.Marshal([]any{
 				"Paypal",
 				paypalPaymentMethodVariants{
 					Email: emailArg,
 				}})
 		},
 	})
-	return data, err
+	return paymentMethodData, paymentMethodErr
 }
-func (s *PaymentMethod) UnmarshalJSON(data []byte) error {
+func (paymentMethodInstance *PaymentMethod) UnmarshalJSON(paymentMethodData []byte) error {
 	// The expected format is ["TypeName", { ... data... }]
-	var raw []json.RawMessage
-	if err := json.Unmarshal(data, &raw); err != nil {
+	var paymentMethodRaw []json.RawMessage
+	if err := json.Unmarshal(paymentMethodData, &paymentMethodRaw); err != nil {
 		return fmt.Errorf("expected an array with type and data, got error: %w", err)
 	}
-	if len(raw) != 2 {
-		return fmt.Errorf("expected array of two elements [type, data], got %d elements", len(raw))
+	if len(paymentMethodRaw) != 2 {
+		return fmt.Errorf("expected array of two elements [type, data], got %d elements", len(paymentMethodRaw))
 	}
 	// Unmarshal the first element to get the type
-	var typeName string
-	if err := json.Unmarshal(raw[0], &typeName); err != nil {
+	var paymentMethodVariantName string
+	if err := json.Unmarshal(paymentMethodRaw[0], &paymentMethodVariantName); err != nil {
 		return fmt.Errorf("failed to unmarshal type name: %w", err)
 	}
-	switch typeName {
+	switch paymentMethodVariantName {
 	case "CreditCard":
-		var temp creditCardPaymentMethodVariants
-		if err := json.Unmarshal(raw[1], &temp); err != nil {
+		var paymentMethodTemp creditCardPaymentMethodVariants
+		if err := json.Unmarshal(paymentMethodRaw[1], &paymentMethodTemp); err != nil {
 			return fmt.Errorf("failed to unmarshal data: %w", err)
 		}
-		s.paymentMethod = creditCardPaymentMethodVariants{
-			Number: temp.Number,
-			Expiry: temp.Expiry,
+		paymentMethodInstance.paymentMethod = creditCardPaymentMethodVariants{
+			Number: paymentMethodTemp.Number,
+			Expiry: paymentMethodTemp.Expiry,
 		}
 	case "Paypal":
-		var temp paypalPaymentMethodVariants
-		if err := json.Unmarshal(raw[1], &temp); err != nil {
+		var paymentMethodTemp paypalPaymentMethodVariants
+		if err := json.Unmarshal(paymentMethodRaw[1], &paymentMethodTemp); err != nil {
 			return fmt.Errorf("failed to unmarshal data: %w", err)
 		}
-		s.paymentMethod = paypalPaymentMethodVariants{
-			Email: temp.Email,
+		paymentMethodInstance.paymentMethod = paypalPaymentMethodVariants{
+			Email: paymentMethodTemp.Email,
 		}
 	default:
-		return fmt.Errorf("unknown type %q", typeName)
+		return fmt.Errorf("unknown type %q", paymentMethodVariantName)
 	}
 	return nil
 }
@@ -135,8 +135,8 @@ type anonymousUserVariants struct {
 	Arg0 PaymentMethod
 }
 
-func (s anonymousUserVariants) Match(variants UserVariants) {
-	variants.Anonymous(s.Arg0)
+func (anonymousInstance anonymousUserVariants) Match(anonymousVariants UserVariants) {
+	anonymousVariants.Anonymous(anonymousInstance.Arg0)
 }
 
 // Anonymous is a constructor function for User; see UserVariants for all constructor functions of User
@@ -150,8 +150,8 @@ type memberUserVariants struct {
 	Since time.Time
 }
 
-func (s memberUserVariants) Match(variants UserVariants) {
-	variants.Member(s.Email, s.Since)
+func (memberInstance memberUserVariants) Match(memberVariants UserVariants) {
+	memberVariants.Member(memberInstance.Email, memberInstance.Since)
 }
 
 // Member is a constructor function for User; see UserVariants for all constructor functions of User
@@ -164,8 +164,8 @@ type adminUserVariants struct {
 	Email string
 }
 
-func (s adminUserVariants) Match(variants UserVariants) {
-	variants.Admin(s.Email)
+func (adminInstance adminUserVariants) Match(adminVariants UserVariants) {
+	adminVariants.Admin(adminInstance.Email)
 }
 
 // Admin is a constructor function for User; see UserVariants for all constructor functions of User
@@ -184,20 +184,20 @@ type UserVariantsMap[A any] struct {
 
 // UserMap is like user.Match method except it returns a value of generic type
 // thus can transform a User value into anything else
-func UserMap[A any](value User, variants UserVariantsMap[A]) A {
-	var result A
-	value.Match(UserVariants{
+func UserMap[A any](userValue User, userVariants UserVariantsMap[A]) A {
+	var userTemp A
+	userValue.Match(UserVariants{
 		Anonymous: func(arg0Arg PaymentMethod) {
-			result = variants.Anonymous(arg0Arg)
+			userTemp = userVariants.Anonymous(arg0Arg)
 		},
 		Member: func(emailArg string, sinceArg time.Time) {
-			result = variants.Member(emailArg, sinceArg)
+			userTemp = userVariants.Member(emailArg, sinceArg)
 		},
 		Admin: func(emailArg string) {
-			result = variants.Admin(emailArg)
+			userTemp = userVariants.Admin(emailArg)
 		},
 	})
-	return result
+	return userTemp
 }
 
 // User = Anonymous | Member | Admin
@@ -210,20 +210,20 @@ type user interface {
 	Match(variants UserVariants)
 }
 
-func (s User) Match(variants UserVariants) {
-	s.user.Match(variants)
+func (userInstance User) Match(userVariants UserVariants) {
+	userInstance.user.Match(userVariants)
 }
-func (s User) MarshalJSON() (data []byte, err error) {
-	s.user.Match(UserVariants{
+func (userInstance User) MarshalJSON() (userData []byte, userErr error) {
+	userInstance.user.Match(UserVariants{
 		Anonymous: func(arg0Arg PaymentMethod) {
-			data, err = json.Marshal([]any{
+			userData, userErr = json.Marshal([]any{
 				"Anonymous",
 				anonymousUserVariants{
 					Arg0: arg0Arg,
 				}})
 		},
 		Member: func(emailArg string, sinceArg time.Time) {
-			data, err = json.Marshal([]any{
+			userData, userErr = json.Marshal([]any{
 				"Member",
 				memberUserVariants{
 					Email: emailArg,
@@ -231,57 +231,57 @@ func (s User) MarshalJSON() (data []byte, err error) {
 				}})
 		},
 		Admin: func(emailArg string) {
-			data, err = json.Marshal([]any{
+			userData, userErr = json.Marshal([]any{
 				"Admin",
 				adminUserVariants{
 					Email: emailArg,
 				}})
 		},
 	})
-	return data, err
+	return userData, userErr
 }
-func (s *User) UnmarshalJSON(data []byte) error {
+func (userInstance *User) UnmarshalJSON(userData []byte) error {
 	// The expected format is ["TypeName", { ... data... }]
-	var raw []json.RawMessage
-	if err := json.Unmarshal(data, &raw); err != nil {
+	var userRaw []json.RawMessage
+	if err := json.Unmarshal(userData, &userRaw); err != nil {
 		return fmt.Errorf("expected an array with type and data, got error: %w", err)
 	}
-	if len(raw) != 2 {
-		return fmt.Errorf("expected array of two elements [type, data], got %d elements", len(raw))
+	if len(userRaw) != 2 {
+		return fmt.Errorf("expected array of two elements [type, data], got %d elements", len(userRaw))
 	}
 	// Unmarshal the first element to get the type
-	var typeName string
-	if err := json.Unmarshal(raw[0], &typeName); err != nil {
+	var userVariantName string
+	if err := json.Unmarshal(userRaw[0], &userVariantName); err != nil {
 		return fmt.Errorf("failed to unmarshal type name: %w", err)
 	}
-	switch typeName {
+	switch userVariantName {
 	case "Anonymous":
-		var temp anonymousUserVariants
-		if err := json.Unmarshal(raw[1], &temp); err != nil {
+		var userTemp anonymousUserVariants
+		if err := json.Unmarshal(userRaw[1], &userTemp); err != nil {
 			return fmt.Errorf("failed to unmarshal data: %w", err)
 		}
-		s.user = anonymousUserVariants{
-			Arg0: temp.Arg0,
+		userInstance.user = anonymousUserVariants{
+			Arg0: userTemp.Arg0,
 		}
 	case "Member":
-		var temp memberUserVariants
-		if err := json.Unmarshal(raw[1], &temp); err != nil {
+		var userTemp memberUserVariants
+		if err := json.Unmarshal(userRaw[1], &userTemp); err != nil {
 			return fmt.Errorf("failed to unmarshal data: %w", err)
 		}
-		s.user = memberUserVariants{
-			Email: temp.Email,
-			Since: temp.Since,
+		userInstance.user = memberUserVariants{
+			Email: userTemp.Email,
+			Since: userTemp.Since,
 		}
 	case "Admin":
-		var temp adminUserVariants
-		if err := json.Unmarshal(raw[1], &temp); err != nil {
+		var userTemp adminUserVariants
+		if err := json.Unmarshal(userRaw[1], &userTemp); err != nil {
 			return fmt.Errorf("failed to unmarshal data: %w", err)
 		}
-		s.user = adminUserVariants{
-			Email: temp.Email,
+		userInstance.user = adminUserVariants{
+			Email: userTemp.Email,
 		}
 	default:
-		return fmt.Errorf("unknown type %q", typeName)
+		return fmt.Errorf("unknown type %q", userVariantName)
 	}
 	return nil
 }
