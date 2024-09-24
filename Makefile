@@ -6,7 +6,7 @@ example-generate:
 	go run *.go -input example/tree_1_declaration.go
 
 example-run:
-	go run example/*.go
+	go run `ls example/*.go | grep -v "_test.go" | xargs -I {} echo {}`
 
 test:
 	go test ./...

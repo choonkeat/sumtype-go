@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"unicode"
@@ -11,6 +12,10 @@ func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 	builder.WriteString("// Generated code by github.com/choonkeat/sumtype-go\npackage ")
 	builder.WriteString(parsedFile.PackageName)
 	builder.WriteString("\n\n")
+	parsedFile.Imports = append(parsedFile.Imports, "encoding/json", "fmt")
+	slices.Sort(parsedFile.Imports)
+	parsedFile.Imports = slices.Compact(parsedFile.Imports)
+
 	if len(parsedFile.Imports) > 0 {
 		builder.WriteString("import (\n")
 		for _, imp := range parsedFile.Imports {
@@ -26,19 +31,23 @@ func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 		typeName := row.key
 		dataList := row.value
 		mainTypeName := strings.TrimSuffix(typeName, flags.structSuffix)
-
 		generics := []ParsedGeneric{}
-		for _, data := range dataList {
+		var genericsDecl, paramList string
+		if len(dataList) > 0 {
+			data := dataList[0]
 			generics = data.Generics // keep it for later
+			genericsDecl = buildGenericTypeDeclaration(data.Generics)
+			paramList = buildParameterListDeclaration(data.Generics)
+		}
+
+		for _, data := range dataList {
 			structName := unexported(data.Name) + typeName
-			genericsDecl := buildGenericTypeDeclaration(data.Generics)
-			paramList := buildParameterListDeclaration(data.Generics)
 
 			// Generate struct
 			fmt.Fprintf(builder, "\n// %s\n", data.Name)
 			fmt.Fprintf(builder, "type %s%s struct {\n", structName, genericsDecl)
 			for _, field := range data.Fields {
-				fmt.Fprintf(builder, "\t%s %s\n", field.Name, field.Type)
+				fmt.Fprintf(builder, "\t%s %s\n", exported(field.Name), field.Type)
 			}
 			fmt.Fprintf(builder, "}\n\n")
 
@@ -72,7 +81,9 @@ func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 			)
 			if len(data.Fields) > 0 {
 				fmt.Fprintf(builder,
-					"\treturn %s%s{%s}\n",
+					"\treturn %s%s{%s%s{%s}}\n",
+					mainTypeName,
+					paramList,
 					structName,
 					paramList,
 					strings.Join(getFieldNames("Arg", data.Fields), ", "),
@@ -129,7 +140,96 @@ func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 		fmt.Fprintf(builder, "\t})\n")
 		fmt.Fprintf(builder, "\treturn result\n")
 		fmt.Fprintf(builder, "}\n\n")
+
+		variantNames := make([]string, len(dataList))
+		for i, data := range dataList {
+			variantNames[i] = data.Name
+		}
+
+		// Generate struct
+		fmt.Fprintf(builder, "\n// %s = %s\n", mainTypeName, strings.Join(variantNames, " | "))
+		fmt.Fprintf(builder, "type %s%s struct {\n", mainTypeName, genericsDecl)
+		fmt.Fprintf(builder, "\t%s %s%s\n", unexported(mainTypeName), unexported(mainTypeName), paramList)
+		fmt.Fprintf(builder, "}\n")
+
+		// Generate interface
+		fmt.Fprintf(builder, "\n// %s is the interface for %s\n", unexported(mainTypeName), typeName)
+		fmt.Fprintf(builder, "type %s%s interface {\n", unexported(mainTypeName), genericsDecl)
+		fmt.Fprintf(builder, "\tMatch(variants %s%s)\n", typeName, paramList)
+		fmt.Fprintf(builder, "}\n")
+
+		// Generate Match method of JSON struct
+		fmt.Fprintf(builder, "func (s %s%s) Match(variants %s%s) {\n", mainTypeName, paramList, typeName, paramList)
+		fmt.Fprintf(builder, "\ts.%s.Match(variants)\n", unexported(mainTypeName))
+		fmt.Fprintf(builder, "}\n")
+
+		// Generate MarshalJSON method for {mainTypeName}JSON
+		fmt.Fprintf(builder, "func (s %s%s) MarshalJSON() (data []byte, err error) {\n", mainTypeName, paramList)
+		fmt.Fprintf(builder, "\ts.%s.Match(%s%s{\n", unexported(mainTypeName), typeName, paramList)
+		for _, data := range dataList {
+			structName := unexported(data.Name) + typeName
+			fmt.Fprintf(builder, "\t\t%s: func(%s) {\n", data.Name, getParamList("Arg", data.Fields))
+			fmt.Fprintf(builder, "\t\t\tdata, err = json.Marshal([]any{\n")
+			fmt.Fprintf(builder, "\t\t\t\t%#v,\n", data.Name)
+			fmt.Fprintf(builder, "\t\t\t\t%s%s{\n", structName, paramList)
+			for _, field := range data.Fields {
+				fmt.Fprintf(builder, "\t\t\t\t\t%s: %sArg,\n", exported(field.Name), field.Name)
+			}
+			fmt.Fprintf(builder, "\t\t\t}})\n")
+			fmt.Fprintf(builder, "\t\t},\n")
+		}
+		fmt.Fprintf(builder, "\t})\n")
+		fmt.Fprintf(builder, "\treturn data, err\n")
+		fmt.Fprintf(builder, "}\n")
+
+		// Generate UnmarshalJSON method for {mainTypeName}JSON
+		fmt.Fprintf(builder, "func (s *%s%s) UnmarshalJSON(data []byte) error {\n", mainTypeName, paramList)
+		fmt.Fprintf(builder, "\t// The expected format is [\"TypeName\", { ... data... }]\n")
+		fmt.Fprintf(builder, "\tvar raw []json.RawMessage\n")
+		fmt.Fprintf(builder, "\tif err := json.Unmarshal(data, &raw); err != nil {\n")
+		fmt.Fprintf(builder, "\treturn fmt.Errorf(\"expected an array with type and data, got error: %%w\", err)\n")
+		fmt.Fprintf(builder, "\t}\n")
+
+		fmt.Fprintf(builder, "\tif len(raw) != 2 {\n")
+		fmt.Fprintf(builder, "\treturn fmt.Errorf(\"expected array of two elements [type, data], got %%d elements\", len(raw))\n")
+		fmt.Fprintf(builder, "\t}\n")
+
+		fmt.Fprintf(builder, "\t// Unmarshal the first element to get the type\n")
+		fmt.Fprintf(builder, "\tvar typeName string\n")
+		fmt.Fprintf(builder, "\tif err := json.Unmarshal(raw[0], &typeName); err != nil {\n")
+		fmt.Fprintf(builder, "\treturn fmt.Errorf(\"failed to unmarshal type name: %%w\", err)\n")
+		fmt.Fprintf(builder, "\t}\n")
+
+		fmt.Fprintf(builder, "\tswitch typeName {\n")
+		for _, data := range dataList {
+			structName := unexported(data.Name) + typeName
+			fmt.Fprintf(builder, "\tcase %#v:\n", data.Name)
+			fmt.Fprintf(builder, "\tvar temp %s%s\n", structName, paramList)
+			fmt.Fprintf(builder, "\tif err := json.Unmarshal(raw[1], &temp); err != nil {\n")
+			fmt.Fprintf(builder, "\treturn fmt.Errorf(\"failed to unmarshal data: %%w\", err)\n")
+			fmt.Fprintf(builder, "\t}\n")
+			fmt.Fprintf(builder, "\ts.%s = %s%s{\n", unexported(mainTypeName), structName, paramList)
+			for _, field := range data.Fields {
+				fmt.Fprintf(builder, "\t\t%s: temp.%s,\n", exported(field.Name), exported(field.Name))
+			}
+			fmt.Fprintf(builder, "\t}\n")
+		}
+		fmt.Fprintf(builder, "\tdefault:\n")
+		fmt.Fprintf(builder, "\treturn fmt.Errorf(\"unknown type %%q\", typeName)\n")
+		fmt.Fprintf(builder, "\t}\n")
+		fmt.Fprintf(builder, "\treturn nil\n")
+		fmt.Fprintf(builder, "\t}\n")
 	}
+}
+
+// exported returns an exported (lowercase) version of the given string
+func exported(s string) string {
+	if s == "" {
+		return ""
+	}
+	r := []rune(s)
+	r[0] = unicode.ToUpper(r[0])
+	return string(r)
 }
 
 // unexported returns an unexported (lowercase) version of the given string
@@ -146,7 +246,11 @@ func unexported(s string) string {
 func getFieldNames(suffix string, fields []ParsedField) []string {
 	var names []string
 	for _, field := range fields {
-		names = append(names, field.Name+suffix)
+		if suffix != "" {
+			names = append(names, field.Name+suffix)
+		} else {
+			names = append(names, exported(field.Name))
+		}
 	}
 	return names
 }

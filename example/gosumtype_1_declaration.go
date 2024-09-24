@@ -15,20 +15,11 @@ import (
 //	    = CreditCard String Time
 //	    | Paypal String
 //
-// we declare `User` as an interface
-type User interface {
-	Match(s UserVariants)
-}
-
-// and the variants as a struct
+// if we declare the `UserVariants` as a struct, we'll get the `User` type.
 type UserVariants struct {
 	Anonymous func(PaymentMethod)                 // preferably named, but can be anonymous
 	Member    func(email string, since time.Time) // named for clarity
 	Admin     func(email string)
-}
-
-type PaymentMethod interface {
-	Match(s PaymentMethodVariants)
 }
 
 type PaymentMethodVariants struct {

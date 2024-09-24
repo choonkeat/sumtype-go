@@ -7,9 +7,11 @@ import (
 	"time"
 )
 
+var timestamp = time.Date(2021, 1, 2, 3, 4, 5, 6, time.UTC)
+
 var users = []User{
 	Anonymous(Paypal("nobody@example.com")), // this returns a `User` value
-	Member("Alice", time.Now()),             // this also returns a `User` value
+	Member("Alice", timestamp),              // this also returns a `User` value
 	Admin("Bob"),                            // this also returns a `User` value
 }
 
