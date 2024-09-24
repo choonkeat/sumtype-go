@@ -50,6 +50,10 @@ func main() {
 		panic(err)
 	}
 
+	if len(parsedFile.Data) == 0 {
+		return
+	}
+
 	var builder strings.Builder
 	writeGoCode(flags, parsedFile, &builder)
 	formattedCode, err := format.Source([]byte(builder.String()))
