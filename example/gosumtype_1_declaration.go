@@ -19,7 +19,7 @@ import (
 type UserVariants struct {
 	Anonymous func(PaymentMethod)                 // preferably named, but can be anonymous
 	Member    func(email string, since time.Time) // named for clarity
-	Admin     func(email string)
+	Admin     func()
 }
 
 type PaymentMethodVariants struct {

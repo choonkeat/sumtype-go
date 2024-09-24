@@ -161,16 +161,15 @@ func Member(emailArg string, sinceArg time.Time) User {
 
 // Admin
 type adminUserVariants struct {
-	Email string
 }
 
 func (adminInstance adminUserVariants) Match(adminVariants UserVariants) {
-	adminVariants.Admin(adminInstance.Email)
+	adminVariants.Admin()
 }
 
 // Admin is a constructor function for User; see UserVariants for all constructor functions of User
-func Admin(emailArg string) User {
-	return User{adminUserVariants{emailArg}}
+func Admin() User {
+	return User{adminUserVariants{}}
 }
 
 // UserVariantsMap is parameter type of UserMap function,
@@ -179,7 +178,7 @@ func Admin(emailArg string) User {
 type UserVariantsMap[A any] struct {
 	Anonymous func(arg0Arg PaymentMethod) A               // when User value pattern matches to Anonymous, return different value
 	Member    func(emailArg string, sinceArg time.Time) A // when User value pattern matches to Member, return different value
-	Admin     func(emailArg string) A                     // when User value pattern matches to Admin, return different value
+	Admin     func() A                                    // when User value pattern matches to Admin, return different value
 }
 
 // UserMap is like user.Match method except it returns a value of generic type
@@ -193,8 +192,8 @@ func UserMap[A any](userValue User, userVariants UserVariantsMap[A]) A {
 		Member: func(emailArg string, sinceArg time.Time) {
 			userTemp = userVariants.Member(emailArg, sinceArg)
 		},
-		Admin: func(emailArg string) {
-			userTemp = userVariants.Admin(emailArg)
+		Admin: func() {
+			userTemp = userVariants.Admin()
 		},
 	})
 	return userTemp
@@ -230,12 +229,10 @@ func (userInstance User) MarshalJSON() (userData []byte, userErr error) {
 					Since: sinceArg,
 				}})
 		},
-		Admin: func(emailArg string) {
+		Admin: func() {
 			userData, userErr = json.Marshal([]any{
 				"Admin",
-				adminUserVariants{
-					Email: emailArg,
-				}})
+				adminUserVariants{}})
 		},
 	})
 	return userData, userErr
@@ -277,9 +274,7 @@ func (userInstance *User) UnmarshalJSON(userData []byte) error {
 		if err := json.Unmarshal(userRaw[1], &userTemp); err != nil {
 			return fmt.Errorf("failed to unmarshal data: %w", err)
 		}
-		userInstance.user = adminUserVariants{
-			Email: userTemp.Email,
-		}
+		userInstance.user = adminUserVariants{}
 	default:
 		return fmt.Errorf("unknown type %q", userVariantName)
 	}

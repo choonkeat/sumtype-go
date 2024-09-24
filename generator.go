@@ -94,7 +94,7 @@ func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
 					strings.Join(getFieldNames("Arg", data.Fields), ", "),
 				)
 			} else {
-				fmt.Fprintf(builder, "\treturn %s%s{}\n", structName, paramList)
+				fmt.Fprintf(builder, "\treturn %s%s{%s%s{}}\n", mainTypeName, paramList, structName, paramList)
 			}
 			fmt.Fprintf(builder, "}\n")
 		}

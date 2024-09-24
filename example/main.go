@@ -12,7 +12,7 @@ var timestamp = time.Date(2021, 1, 2, 3, 4, 5, 6, time.UTC)
 var users = []User{
 	Anonymous(Paypal("nobody@example.com")), // this returns a `User` value
 	Member("Alice", timestamp),              // this also returns a `User` value
-	Admin("Bob"),                            // this also returns a `User` value
+	Admin(),                                 // this also returns a `User` value
 }
 
 var results = []Result[string, int]{
@@ -44,7 +44,7 @@ func main() {
 		Member: func(email string, since time.Time) int {
 			return 20
 		},
-		Admin: func(email string) int {
+		Admin: func() int {
 			return 300
 		},
 	}
@@ -87,8 +87,8 @@ func printUserString(i int, user User) {
 		Member: func(email string, since time.Time) {
 			log.Println(i, email+" (member since "+since.String()+")")
 		},
-		Admin: func(email string) {
-			log.Println(i, email+" (admin)")
+		Admin: func() {
+			log.Println(i, "(admin)")
 		},
 	})
 }
