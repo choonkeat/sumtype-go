@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"go/format"
 	"os"
+	"runtime/debug"
 	"strings"
 )
 
 type Flags struct {
+	actualVersion        string
 	inputFile            string
 	structSuffix         string
 	patternMatchFunction string
@@ -17,10 +19,26 @@ type Flags struct {
 func main() {
 	// Command-line flags
 	var flags Flags
+	if info, ok := debug.ReadBuildInfo(); ok {
+		flags.actualVersion = info.Main.Version
+	}
+	var wantedVersion string
+	flag.StringVar(&wantedVersion, "wanted-version", flags.actualVersion, "Wanted version")
 	flag.StringVar(&flags.inputFile, "input", "", "Input file name")
 	flag.StringVar(&flags.structSuffix, "suffix", "Variants", "Suffix of the struct defining variants")
 	flag.StringVar(&flags.patternMatchFunction, "pattern-match", "Match", "Name of the pattern match method")
 	flag.Parse()
+
+	if wantedVersion != "" {
+		if !(strings.HasPrefix(flags.actualVersion, wantedVersion) || strings.HasSuffix(flags.actualVersion, wantedVersion)) {
+			fmt.Printf("version wanted %s, got %s\n", wantedVersion, flags.actualVersion)
+			os.Exit(1)
+		}
+		if flags.inputFile == "" {
+			return
+		}
+	}
+
 	if flags.inputFile == "" {
 		flag.Usage()
 		return
