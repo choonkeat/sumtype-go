@@ -7,14 +7,29 @@ import (
 	"time"
 )
 
+var users = []User{
+	Anonymous(Paypal("nobody@example.com")), // this returns a `User` value
+	Member("Alice", time.Now()),             // this also returns a `User` value
+	Admin("Bob"),                            // this also returns a `User` value
+}
+
+var results = []Result[string, int]{
+	Err[string, int]("Oops err"), // this returns a `Result` value
+	Ok[string, int](42),          // this also returns a `Result` value
+}
+
+var trees = []Tree[int]{
+	Branch[int](
+		Leaf[int](1),
+		Branch[int](
+			Leaf[int](42),
+			Leaf[int](2),
+		)), // this returns a `Tree` value
+	Leaf[int](3), // this also returns a `Tree` value
+}
+
 // Example usage
 func main() {
-	users := []User{
-		Anonymous(Paypal("nobody@example.com")), // this returns a `User` value
-		Member("Alice", time.Now()),             // this also returns a `User` value
-		Admin("Bob"),                            // this also returns a `User` value
-	}
-
 	for i, user := range users {
 		printUserString(i, user)
 	}
@@ -35,11 +50,6 @@ func main() {
 		log.Printf("%d UserMap: %#v -> %d\n", i, user, UserMap(user, userToCode))
 	}
 
-	results := []Result[string, int]{
-		Err[string, int]("Oops err"), // this returns a `Result` value
-		Ok[string, int](42),          // this also returns a `Result` value
-	}
-
 	for i, result := range results {
 		printHandleResult(i, result)
 	}
@@ -55,16 +65,6 @@ func main() {
 	}
 	for i, result := range results {
 		log.Printf("%d ResultMap: %#v -> %d\n", i, result, ResultMap(result, resultToCode))
-	}
-
-	trees := []Tree[int]{
-		Branch[int](
-			Leaf[int](1),
-			Branch[int](
-				Leaf[int](42),
-				Leaf[int](2),
-			)), // this returns a `Tree` value
-		Leaf[int](3), // this also returns a `Tree` value
 	}
 
 	for _, tree := range trees {
