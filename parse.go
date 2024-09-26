@@ -5,8 +5,8 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
 	"log"
+	"os"
 	"strings"
 )
 
@@ -39,7 +39,7 @@ func parseFile(flags Flags) (ParsedFile, error) {
 		return ParsedFile{}, err
 	}
 
-	src, err := ioutil.ReadFile(flags.inputFile)
+	src, err := os.ReadFile(flags.inputFile)
 	if err != nil {
 		log.Fatal(err)
 	}

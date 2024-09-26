@@ -9,7 +9,12 @@ import (
 )
 
 func writeGoCode(flags Flags, parsedFile ParsedFile, builder *strings.Builder) {
-	builder.WriteString("// Generated code by github.com/choonkeat/sumtype-go\npackage ")
+	builder.WriteString("// Generated code by github.com/choonkeat/sumtype-go")
+	if flags.actualVersion != "" {
+		builder.WriteString("@")
+		builder.WriteString(flags.actualVersion)
+	}
+	builder.WriteString("\npackage ")
 	builder.WriteString(parsedFile.PackageName)
 	builder.WriteString("\n\n")
 	parsedFile.Imports = append(parsedFile.Imports, "encoding/json", "fmt")
