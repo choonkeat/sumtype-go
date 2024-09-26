@@ -18,10 +18,6 @@ type User
 write this Go type definition, e.g. in `declaration.go`
 
 ```go
-type User interface {
-	Match(s UserVariants)
-}
-
 type UserVariants struct { // be sure to suffix the name with `Variants`
 	Anonymous func()
 	Member    func(email string, since time.Time)
@@ -29,14 +25,14 @@ type UserVariants struct { // be sure to suffix the name with `Variants`
 }
 ```
 
-Execute this command
+Execute this command to generate `User` type from your `UserVariants` struct
 
 ```sh
 go install github.com/choonkeat/sumtype-go@v0.4.1 # to install
 sumtype-go -input declaration.go
 ```
 
-To generate `declaration.boilerplate.go` and start using it!
+To generate `declaration.boilerplate.go` and start using `User`!
 
 ```go
 users := []User{
@@ -95,17 +91,14 @@ type Result x a
 can be defined as
 
 ```go
-type Result[x, a any] interface {
-	Match(s ResultVariants[x, a])
-}
-
 type ResultVariants[x, a any] struct {
 	Err func(err x)
 	Ok  func(data a)
 }
 ```
 
-Same thing, after executing `sumtype-go` to generate the `.boilerplate.go` file, you can use it like
+Same thing, after executing `sumtype-go` to generate the `.boilerplate.go` file, you can use
+the generated `Result` like this
 
 ```go
 results := []Result[string, int]{

@@ -1,0 +1,24 @@
+[
+  [
+    "Anonymous",
+    {
+      "Arg0": [
+        "Paypal",
+        {
+          "Email": "nobody@example.com"
+        }
+      ]
+    }
+  ],
+  [
+    "Member",
+    {
+      "Email": "Alice",
+      "Since": "2021-01-02T03:04:05.000000006Z"
+    }
+  ],
+  [
+    "Admin",
+    {}
+  ]
+]

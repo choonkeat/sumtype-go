@@ -7,14 +7,31 @@ import (
 	"time"
 )
 
+var timestamp = time.Date(2021, 1, 2, 3, 4, 5, 6, time.UTC)
+
+var users = []User{
+	Anonymous(Paypal("nobody@example.com")), // this returns a `User` value
+	Member("Alice", timestamp),              // this also returns a `User` value
+	Admin(),                                 // this also returns a `User` value
+}
+
+var results = []Result[string, int]{
+	Err[string, int]("Oops err"), // this returns a `Result` value
+	Ok[string, int](42),          // this also returns a `Result` value
+}
+
+var trees = []Tree[int]{
+	Branch[int](
+		Leaf[int](1),
+		Branch[int](
+			Leaf[int](42),
+			Leaf[int](2),
+		)), // this returns a `Tree` value
+	Leaf[int](3), // this also returns a `Tree` value
+}
+
 // Example usage
 func main() {
-	users := []User{
-		Anonymous(Paypal("nobody@example.com")), // this returns a `User` value
-		Member("Alice", time.Now()),             // this also returns a `User` value
-		Admin("Bob"),                            // this also returns a `User` value
-	}
-
 	for i, user := range users {
 		printUserString(i, user)
 	}
@@ -27,17 +44,12 @@ func main() {
 		Member: func(email string, since time.Time) int {
 			return 20
 		},
-		Admin: func(email string) int {
+		Admin: func() int {
 			return 300
 		},
 	}
 	for i, user := range users {
 		log.Printf("%d UserMap: %#v -> %d\n", i, user, UserMap(user, userToCode))
-	}
-
-	results := []Result[string, int]{
-		Err[string, int]("Oops err"), // this returns a `Result` value
-		Ok[string, int](42),          // this also returns a `Result` value
 	}
 
 	for i, result := range results {
@@ -55,16 +67,6 @@ func main() {
 	}
 	for i, result := range results {
 		log.Printf("%d ResultMap: %#v -> %d\n", i, result, ResultMap(result, resultToCode))
-	}
-
-	trees := []Tree[int]{
-		Branch[int](
-			Leaf[int](1),
-			Branch[int](
-				Leaf[int](42),
-				Leaf[int](2),
-			)), // this returns a `Tree` value
-		Leaf[int](3), // this also returns a `Tree` value
 	}
 
 	for _, tree := range trees {
@@ -85,8 +87,8 @@ func printUserString(i int, user User) {
 		Member: func(email string, since time.Time) {
 			log.Println(i, email+" (member since "+since.String()+")")
 		},
-		Admin: func(email string) {
-			log.Println(i, email+" (admin)")
+		Admin: func() {
+			log.Println(i, "(admin)")
 		},
 	})
 }
